@@ -4,7 +4,7 @@ An implementation of the CoDeepNEAT algorithm developed by Risto Miikkulainen. I
 
 To test the viability of this implementation, I will target the MNIST and CIFAR-10 image classification data sets.
 
-## Previous Versions & Legal ##
+## Previous Versions ##
 
 The original repo this project is based on is at: https://github.com/neat-python/neat-python. It implements NEAT (NeuroEvolution of Augmenting Topologies) which is a method developed by Kenneth O. Stanley for evolving arbitrary neural networks. This project is a Python implementation of NEAT. For further information regarding general concepts and theory, please see [Selected Publications](http://www.cs.ucf.edu/~kstanley/#publications) on Stanley's website.
 
