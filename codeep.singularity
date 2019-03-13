@@ -2,7 +2,7 @@ Bootstrap:docker
 From:ubuntu:16.04
 
 %help
-Singularity container to run on theHigh Performance Cluster at UWyo.
+Singularity container to run on the High Performance Cluster at UWyo.
 For CoDeepNEAT Senior Design Project by Geo. Dylan Dickerson Spring 2019.
 
 %setup
@@ -10,22 +10,33 @@ For CoDeepNEAT Senior Design Project by Geo. Dylan Dickerson Spring 2019.
 %post
 	# Prep the container
 	apt-get -y update && apt-get -y dist-upgrade
-	apt-get install -y build-essential tar unzip \
-	libgl1-mesa-glx wget
+	apt-get install -y build-essential tar unzip wget
 	apt-get dist-upgrade -y
-	# Install anaconda python
+	# Install anaconda python version 2.7
 	wget https://repo.continuum.io/archive/Anaconda2-2018.12-Linux-x86_64.sh
 	bash Anaconda2-2018.12-Linux-x86_64.sh -b -p /Software/anaconda2
 	PATH="/Software/anaconda2/bin:$PATH"
 	export PATH
+	# Install dependencies, tensorflow, and keras
+	pip install --upgrade numpy scipy scikit-learn pillow h5py
+	pip install --upgrade tensorflow
+	pip install --upgrade keras
 		
 	# Cleanup unneeded files
 	rm Anaconda2-2018.12-Linux-x86_64.sh
 	# Make sure files are updated correctly
 	apt-get -y update && apt-get -y dist-upgrade
 	# Make needed directories for binding on HPC
-	mkdir -p /project /gscratch/gdicker1/CoDeepNEAT /lscratch	
-	
+	mkdir -p /project /gscratch/gdicker1/CoDeepNEAT /lscratch
+
+%test
+	# make sure python is installed
+	whereis python
+	/Software/anaconda2/bin/python --version # should be 2.7
+	# TODO: Add a way to check /root/.keras/keras.json
+	#  currently can't be copied in post or viewed in test
+	# Peek at the root directory
+	ls -l /
 
 %environment
 	PYPATH="/Software/anaconda2/bin"
