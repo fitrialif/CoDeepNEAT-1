@@ -53,17 +53,19 @@ class ModNodeGene(object):
     def mutate(self):
         r = random.random
         if r() < Config.prob_mutatesize:
-            self.__mutate_bias()
+            self.__mutate_size()
         if r() < Config.prob_mutateactivation:
-            self.__mutate_response()
+            self.__mutate_activation()
 
 
 class ConvModGene(ModNodeGene):
-    def __init__(self, id, numfilts, activation_type, k_size, strides,
+    def __init__(self, id, nodetype, numfilts, activation_type, k_size, strides,
                  padding, dropout, maxpool, batchnorm):
-        super(ConvModGene, self).__init__(id, 'HIDDEN', numfilts,
-                                          activation_type)
 
+        self._id = id
+        self._type = nodetype
+        self._layersize = numfilts
+        self._activation_type = activation_type
         self._kernel_size = k_size
         self._strides = strides
         self._padding = padding
@@ -73,10 +75,9 @@ class ConvModGene(ModNodeGene):
 
         assert(self._layersize in range(Config.min_filters, Config.max_filters))
         assert(self._kernel_size in range(Config.min_ksize, Config.max_ksize))
-        valstrides = list(product((Config.min_stride, Config.max_stride),
-                                  (Config.min_stride, Config.max_stride)))
-        assert(self._strides in valstrides)
-        assert(self._strides in range(Config.min_drop, Config.max_drop,
+        assert(self._strides in range(Config.min_stride, Config.max_stride))
+        assert(self._padding in ('same', 'valid'))
+        assert(self._dropout in range(Config.min_drop, Config.max_drop,
                                       Config.drop_mutsplit))
         assert(self._maxpool in (True, False))
         assert(self._batchnorm in (True, False))
@@ -92,25 +93,46 @@ class ConvModGene(ModNodeGene):
     # Mutators. analagous to setters
     # TODO: Implement mutators
     def _mutate_kernel(self):
-        return
+        self._kernel_size = random.randint(Config.min_ksize, Config.max_ksize)
 
     def _mutate_strides(self):
-        return
+        self._strides = random.randint(Config.min_stride, Config.max_stride)
 
     def _mutate_padding(self):
-        return
+        self._padding = random.choice(('same', 'valid'))
 
     def _mutate_dropout(self):
-        return
+        self._dropout += random.gauss(0, 1) * Config.drop_mutation_power
+        if self._dropout < Config.min_drop:
+            self.dropout = Config.min_drop
+        if self._dropout > Config.max_drop:
+            self._dropout = Config.max_drop
 
     def _mutate_maxpool(self):
-        return
+        self._maxpool = random.choice((True, False))
 
     def _mutate_batchnorm(self):
-        return
+        self._batchnorm = random.choice((True, False))
 
     def mutate(self):
-        return
+        super(ConvModGene, self).mutate()
+        r = random.random
+        if r() < Config.prob_mutatelayersize:
+            self._mutate_size()
+        if r() < Config.prob_mutateactivation:
+            self.__mutate_activation
+        if r() < Config.prob_mutatekernel:
+            self._mutate_kernel()
+        if r() < Config.prob_mutatestride:
+            self._mutate_strides()
+        if r() < Config.prob_mutatepadding:
+            self._mutate_padding()
+        if r() < Config.prob_mutatedrop:
+            self._mutate_dropout()
+        if r() < Config._mutate_maxpool:
+            self._mutate_maxpool()
+        if r() < Config.prob_mutatebatch:
+            self._mutate_batchnorm()
 
     def get_child(self):
         assert(self.id == self.id)
@@ -169,7 +191,7 @@ class ModConnectionGene(object):
         return cls.__global_innov_number
 
     def __str__(self):
-        s = "In %2d, Out %2d, Weight %+3.5f, " % (self.__in, self.__out)
+        s = "In %2d, Out %2d, " % (self.__in, self.__out)
         if self.__enabled:
             s += "Enabled, "
         else:
