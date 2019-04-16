@@ -12,31 +12,47 @@ For CoDeepNEAT Senior Design Project by Geo. Dylan Dickerson Spring 2019.
 	apt-get -y update && apt-get -y dist-upgrade
 	apt-get install -y build-essential tar unzip wget
 	apt-get dist-upgrade -y
+
 	# Install anaconda python version 2.7
 	wget https://repo.continuum.io/archive/Anaconda2-2018.12-Linux-x86_64.sh
 	bash Anaconda2-2018.12-Linux-x86_64.sh -b -p /Software/anaconda2
 	PATH="/Software/anaconda2/bin:$PATH"
 	export PATH
+
 	# Install dependencies, tensorflow, and keras
 	pip install --upgrade numpy scipy scikit-learn pillow h5py
 	pip install --upgrade tensorflow
 	pip install --upgrade keras
+
+	# Import databases (MNIST and CIFAR-10)
+	python -c "from keras.datasets import mnist; mnist.load_data()"
+	python -c "from keras.datasets import cifar10; cifar10.load_data()"
 		
 	# Cleanup unneeded files
 	rm Anaconda2-2018.12-Linux-x86_64.sh
+
 	# Make sure files are updated correctly
 	apt-get -y update && apt-get -y dist-upgrade
+
 	# Make needed directories for binding on HPC
 	mkdir -p /project /gscratch/gdicker1/CoDeepNEAT /lscratch
 
 %test
 	# make sure python is installed
+	PYPATH="/Software/anaconda2/bin"
 	whereis python
-	/Software/anaconda2/bin/python --version # should be 2.7
-	# TODO: Add a way to check /root/.keras/keras.json
-	#  currently can't be copied in post or viewed in test
-	# Peek at the root directory
-	ls -l /
+	$PYPATH/python --version # should be 2.7
+	
+	# Check tensorflow & keras version
+	$PYPATH/pip show tensorflow | grep Version # should be 1.13.1
+	$PYPATH/pip show keras | grep Version # should be 2.2.4
+
+	# Check that data sets are installed
+	$PYPATH/python -c "from keras.datasets import mnist; mnist.load_data()" # Should be "Using Tensorflow backend"
+	$PYPATH/python -c "from keras.datasets import cifar10; cifar10.load_data()" # Should be "Using Tensorflow backend"
+
+	# Uncomment to peek at the root directory
+	# ls -l /P
 
 %environment
 	PYPATH="/Software/anaconda2/bin"
