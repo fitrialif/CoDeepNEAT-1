@@ -14,7 +14,8 @@ def load(file):
 
         # set class attributes
         # phenotype
-        Config.input_nodes = int(parameters.get('phenotype', 'input_nodes'))
+        Config.input_nodes = str(parameters.get('phenotype', 'input_nodes'))
+        Config.input_nodes = list(int(x) for x in Config.input_nodes.split(','))
         Config.output_nodes = int(parameters.get('phenotype', 'output_nodes'))
         Config.hidden_nodes = int(parameters.get('phenotype', 'hidden_nodes'))
 
@@ -22,17 +23,17 @@ def load(file):
         Config.min_learnrate = float(parameters.get('blueprint', 'min_learnrate'))
         Config.max_learnrate = float(parameters.get('blueprint', 'max_learnrate'))
         Config.learnrate_mutation_power = float(parameters.get('blueprint', 'learnrate_mutation_power'))
-        Config.min_momentum = float(parameters.get('blueprint', 'min_momentum'))
-        Config.max_momentum = float(parameters.get('blueprint', 'max_momentum'))
-        Config.momentum_mutation_power = float(parameters.get('blueprint', 'momentum_mutation_power'))
-        Config.min_cropsize = int(parameters.get('blueprint', 'min_cropsize'))
-        Config.max_cropsize = int(parameters.get('blueprint', 'max_cropsize'))
-        Config.cropsize_mutation_power = int(parameters.get('blueprint', 'cropsize_mutation_power'))
+        #Config.min_momentum = float(parameters.get('blueprint', 'min_momentum'))
+        #Config.max_momentum = float(parameters.get('blueprint', 'max_momentum'))
+        #Config.momentum_mutation_power = float(parameters.get('blueprint', 'momentum_mutation_power'))
+        #Config.min_cropsize = int(parameters.get('blueprint', 'min_cropsize'))
+        #Config.max_cropsize = int(parameters.get('blueprint', 'max_cropsize'))
+        #Config.cropsize_mutation_power = int(parameters.get('blueprint', 'cropsize_mutation_power'))
         Config.prob_mutatemodpointer = float(parameters.get('blueprint', 'prob_mutatemodpointer'))
         Config.prob_mutatelearnrate = float(parameters.get('blueprint', 'prob_mutatelearnrate'))
-        Config.prob_mutatemomentum = float(parameters.get('blueprint', 'prob_mutatemomentum'))
-        Config.prob_mutatecropsize = float(parameters.get('blueprint', 'prob_mutatecropsize'))
-        Config.prob_mutatehorizontalflips = float(parameters.get('blueprint', 'prob_mutatehorizontalflips'))
+        #Config.prob_mutatemomentum = float(parameters.get('blueprint', 'prob_mutatemomentum'))
+        #Config.prob_mutatecropsize = float(parameters.get('blueprint', 'prob_mutatecropsize'))
+        #Config.prob_mutatehorizontalflips = float(parameters.get('blueprint', 'prob_mutatehorizontalflips'))
 
         # Module
         Config.min_size = int(parameters.get('module', 'min_size'))
