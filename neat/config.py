@@ -30,6 +30,7 @@ def load(file):
         #Config.max_cropsize = int(parameters.get('blueprint', 'max_cropsize'))
         #Config.cropsize_mutation_power = int(parameters.get('blueprint', 'cropsize_mutation_power'))
         Config.prob_mutatemodpointer = float(parameters.get('blueprint', 'prob_mutatemodpointer'))
+        Config.prob_addmodule = float(parameters.get('blueprint', 'prob_addmodule'))
         Config.prob_mutatelearnrate = float(parameters.get('blueprint', 'prob_mutatelearnrate'))
         #Config.prob_mutatemomentum = float(parameters.get('blueprint', 'prob_mutatemomentum'))
         #Config.prob_mutatecropsize = float(parameters.get('blueprint', 'prob_mutatecropsize'))
@@ -99,6 +100,7 @@ class Config:
     max_cropsize = None
     cropsize_mutation_power = None
     prob_mutatemodpointer = None
+    prob_addmodule = None
     prob_mutatelearnrate = None
     prob_mutatemomentum = None
     prob_mutatecropsize = None

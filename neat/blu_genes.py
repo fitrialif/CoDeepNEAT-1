@@ -7,6 +7,7 @@
 # -*- coding: UTF-8 -*-
 import random
 from config import Config
+from genes import NodeGene
 
 
 class BluNodeGene(NodeGene):
@@ -43,11 +44,13 @@ class BluNodeGene(NodeGene):
                         self._response, self._activation_type)
 
     def mutate(self):
+        if self._type != 'HIDDEN':  # Don't modify input & output nodes
+            return
         if random.random() < Config.prob_mutatemodpointer:
             self.__mutate_modpointer()
 
-    def __mutate_modpointer():
-        return random.choice(modSpecies)
+    def __mutate_modpointer(self):
+        return random.choice(range(Config.modpopsize))
 
 
 class BluConnectionGene(object):
@@ -93,7 +96,7 @@ class BluConnectionGene(object):
         return cls.__global_innov_number
 
     def __str__(self):
-        s = "In %2d, Out %2d, Weight %+3.5f, " % (self.__in, self.__out)
+        s = "In %2d, Out %2d, " % (self.__in, self.__out)
         if self.__enabled:
             s += "Enabled, "
         else:

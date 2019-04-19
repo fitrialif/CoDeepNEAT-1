@@ -45,7 +45,7 @@ def draw_net(chromosome, id=''):
     else:
         print 'You do not have the PyDot package.'
 
-def draw_ff(chromosome):
+def draw_ff(chromosome, outfile):
     ''' Draws a feedforward neural network '''
 
     output = 'digraph G {\n  node [shape=circle, fontsize=9, height=0.2, width=0.2]'
@@ -53,18 +53,18 @@ def draw_ff(chromosome):
     # subgraph for inputs and outputs
     output += '\n  subgraph cluster_inputs { \n  node [style=filled, shape=box] \n    color=white'
     for ng in chromosome.node_genes:
-        if ng.type== 'INPUT':
-            output += '\n    '+str(ng.id)
+        if ng.type == 'INPUT':
+            output += '\n    ' + str(ng.id)
     output += '\n  }'
 
     output += '\n  subgraph cluster_outputs { \n    node [style=filled, color=lightblue] \n    color=white'
     for ng in chromosome.node_genes:
-        if ng.type== 'OUTPUT':
-            output += '\n    '+str(ng.id)
+        if ng.type == 'OUTPUT':
+            output += '\n    ' + str(ng.id)
     output += '\n  }'
     # topology
     for cg in chromosome.conn_genes:
-        output += '\n  '+str(cg.innodeid)+' -> '+str(cg.outnodeid)
+        output += '\n  ' + str(cg.innodeid) + ' -> ' + str(cg.outnodeid)
         if cg.enabled is False:
             output += ' [style=dotted, color=cornflowerblue]'
 
@@ -72,7 +72,38 @@ def draw_ff(chromosome):
 
     if has_pydot:
         g = pydot.graph_from_dot_data(output)
-        g.write('feedforward.svg', prog='dot', format='svg')
+        g[0].write(outfile + '.svg', prog='dot', format='svg')
+    else:
+        print 'You do not have the PyDot package.'
+
+def draw_blu(chromosome, outfile):
+    ''' Draws a feedforward neural network '''
+
+    output = 'digraph G {\n  node [shape=circle, fontsize=9, height=0.2, width=0.2]'
+
+    # subgraph for inputs and outputs
+    output += '\n  subgraph cluster_inputs { \n  node [style=filled, shape=box] \n    color=white'
+    for ng in chromosome.node_genes:
+        if ng.type == 'INPUT':
+            output += '\n    ' + str(ng.id)
+    output += '\n  }'
+
+    output += '\n  subgraph cluster_outputs { \n    node [style=filled, color=lightblue] \n    color=white'
+    for ng in chromosome.node_genes:
+        if ng.type == 'OUTPUT':
+            output += '\n    ' + str(ng.id)
+    output += '\n  }'
+    # topology
+    for cg in chromosome.conn_genes:
+        output += '\n  ' + str(cg.innodeid) + ' -> ' + str(cg.outnodeid)
+        if cg.enabled is False:
+            output += ' [style=dotted, color=cornflowerblue]'
+
+    output += '\n }'
+
+    if has_pydot:
+        g = pydot.graph_from_dot_data(output)
+        g[0].write(outfile + '.svg', prog='dot', format='svg')
     else:
         print 'You do not have the PyDot package.'
 
