@@ -1,5 +1,5 @@
 Bootstrap:docker
-From:ubuntu:16.04
+From:tensorflow/tensorflow:latest-gpu
 
 %help
 Singularity container to run on the High Performance Cluster at UWyo.
@@ -10,26 +10,28 @@ For CoDeepNEAT Senior Design Project by Geo. Dylan Dickerson Spring 2019.
 %post
 	# Prep the container
 	apt-get -y update && apt-get -y dist-upgrade
-	apt-get install -y build-essential tar unzip wget
-	apt-get dist-upgrade -y
-
-	# Install anaconda python version 2.7
-	wget https://repo.continuum.io/archive/Anaconda2-2018.12-Linux-x86_64.sh
-	bash Anaconda2-2018.12-Linux-x86_64.sh -b -p /Software/anaconda2
-	PATH="/Software/anaconda2/bin:$PATH"
-	export PATH
+	apt-get install -y build-essential tar unzip wget cmake git zip linux-headers-$(uname -r)  \
+	graphviz libplot-dev plotutils nvidia-418-dev nvidia-modprobe
+	apt-get update && apt-get -y upgrade
 
 	# Install dependencies, tensorflow, and keras
-	pip install --upgrade numpy scipy scikit-learn pillow h5py
-	pip install --upgrade tensorflow
-	pip install --upgrade keras
+	PIPDIR=/usr/local/bin
+	$PIPDIR/pip install --upgrade keras
+
+	# Install Biggles & PyDot (for visialize.py in neat)
+	$PIPDIR/pip install biggles
+	$PIPDIR/pip install pydot
+
+	# Make sure libcuda.so.1 can be found
+	cp /usr/local/cuda-10.0/compat/libcuda.so.1 /usr/local/cuda/lib
+
 
 	# Import databases (MNIST and CIFAR-10)
 	python -c "from keras.datasets import mnist; mnist.load_data()"
 	python -c "from keras.datasets import cifar10; cifar10.load_data()"
-		
-	# Cleanup unneeded files
-	rm Anaconda2-2018.12-Linux-x86_64.sh
+	
+	# Remove unneeded files
+	
 
 	# Make sure files are updated correctly
 	apt-get -y update && apt-get -y dist-upgrade
@@ -38,25 +40,22 @@ For CoDeepNEAT Senior Design Project by Geo. Dylan Dickerson Spring 2019.
 	mkdir -p /project /gscratch/gdicker1/CoDeepNEAT /lscratch
 
 %test
+	PIPDIR=/usr/local/bin
 	# make sure python is installed
-	PYPATH="/Software/anaconda2/bin"
 	whereis python
-	$PYPATH/python --version # should be 2.7
-	
+	python --version # should be 2.7
+	$PIPDIR/pip list
 	# Check tensorflow & keras version
-	$PYPATH/pip show tensorflow | grep Version # should be 1.13.1
-	$PYPATH/pip show keras | grep Version # should be 2.2.4
+	$PIPDIR/pip show tensorflow-gpu | grep Version # should be 1.13.1
+	$PIPDIR/pip show keras | grep Version # should be 2.2.4
 
 	# Check that data sets are installed
-	$PYPATH/python -c "from keras.datasets import mnist; mnist.load_data()" # Should be "Using Tensorflow backend"
-	$PYPATH/python -c "from keras.datasets import cifar10; cifar10.load_data()" # Should be "Using Tensorflow backend"
+	python -c "from keras.datasets import mnist; mnist.load_data()" # Should be "Using Tensorflow backend"
+	python -c "from keras.datasets import cifar10; cifar10.load_data()" # Should be "Using Tensorflow backend"
 
 	# Uncomment to peek at the root directory
 	# ls -l /P
 
 %environment
-	PYPATH="/Software/anaconda2/bin"
-	PATH="/Software/anaconda2/bin:$PATH"
-	export PYPATH PATH
 
 %runscript
