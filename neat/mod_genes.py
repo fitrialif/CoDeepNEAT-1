@@ -2,6 +2,7 @@
 import random
 from config import Config
 from itertools import product
+import numpy as np # for linspace
 
 
 class ModNodeGene(object):
@@ -13,6 +14,7 @@ class ModNodeGene(object):
         self._type = nodetype
         self._layersize = layersize
         self._activation_type = activation_type
+        print self._activation_type
 
         assert(self._type in ('INPUT', 'OUTPUT', 'HIDDEN'))
         assert(self._activation_type in ('tanh', 'relu', 'sigmoid'))
@@ -67,20 +69,19 @@ class ConvModGene(ModNodeGene):
         self._layersize = numfilts
         self._activation_type = activation_type
         self._kernel_size = k_size
-        self._strides = strides
+        # self._strides = strides
         self._padding = padding
         self._dropout = dropout
         self._maxpool = maxpool
-        self._batchnorm = batchnorm
+        #self._batchnorm = batchnorm
 
-        assert(self._layersize in range(Config.min_filters, Config.max_filters))
+        assert(self._layersize in range(Config.min_size, Config.max_size))
         assert(self._kernel_size in range(Config.min_ksize, Config.max_ksize))
-        assert(self._strides in range(Config.min_stride, Config.max_stride))
+        # assert(self._strides in range(Config.min_stride, Config.max_stride))
         assert(self._padding in ('same', 'valid'))
-        assert(self._dropout in range(Config.min_drop, Config.max_drop,
-                                      Config.drop_mutsplit))
+        assert(self._dropout in np.linspace(Config.min_drop, Config.max_drop, 1000))
         assert(self._maxpool in (True, False))
-        assert(self._batchnorm in (True, False))
+        # assert(self._batchnorm in (True, False))
 
     # Getters for values, setters are done through mutate
     kernel_size = property(lambda self: self._kernel_size)
@@ -88,10 +89,17 @@ class ConvModGene(ModNodeGene):
     padding = property(lambda self: self._padding)
     dropout = property(lambda self: self._dropout)
     maxpool = property(lambda self: self._maxpool)
-    batchnorm = property(lambda self: self._batchnorm)
+    # batchnorm = property(lambda self: self._batchnorm)
 
     # Mutators. analagous to setters
     # TODO: Implement mutators
+    def _mutate_size(self):
+        self._layersize += random.gauss(0, 1) * Config.size_mutation_power
+        if self._layersize > Config.max_size:
+            self._layersize = Config.max_size
+        elif self._layersize < Config.min_size:
+            self._layersize = Config.min_size
+
     def _mutate_kernel(self):
         self._kernel_size = random.randint(Config.min_ksize, Config.max_ksize)
 
@@ -104,7 +112,7 @@ class ConvModGene(ModNodeGene):
     def _mutate_dropout(self):
         self._dropout += random.gauss(0, 1) * Config.drop_mutation_power
         if self._dropout < Config.min_drop:
-            self.dropout = Config.min_drop
+            self._dropout = Config.min_drop
         if self._dropout > Config.max_drop:
             self._dropout = Config.max_drop
 
@@ -115,24 +123,23 @@ class ConvModGene(ModNodeGene):
         self._batchnorm = random.choice((True, False))
 
     def mutate(self):
-        super(ConvModGene, self).mutate()
         r = random.random
         if r() < Config.prob_mutatelayersize:
             self._mutate_size()
         if r() < Config.prob_mutateactivation:
-            self.__mutate_activation
+            self._mutate_activation
         if r() < Config.prob_mutatekernel:
             self._mutate_kernel()
-        if r() < Config.prob_mutatestride:
-            self._mutate_strides()
+        #if r() < Config.prob_mutatestride:
+        #    self._mutate_strides()
         if r() < Config.prob_mutatepadding:
             self._mutate_padding()
         if r() < Config.prob_mutatedrop:
             self._mutate_dropout()
-        if r() < Config._mutate_maxpool:
+        if r() < Config.prob_mutatemaxpool:
             self._mutate_maxpool()
-        if r() < Config.prob_mutatebatch:
-            self._mutate_batchnorm()
+        #if r() < Config.prob_mutatebatch:
+        #    self._mutate_batchnorm()
 
     def get_child(self):
         assert(self.id == self.id)
@@ -146,6 +153,12 @@ class ConvModGene(ModNodeGene):
         return ConvModGene(self._id, self._layersize, self._activation_type,
                            self._kernel_size, self._strides, self._padding,
                            self._dropout, self._maxpool, self._batchnorm)
+
+    def __str__(self):
+        s = super(ConvModGene, self).__str__()
+        s += "\n\tksize: %1d padding: %5s drop: %5f maxpool: %s" \
+             %(self.kernel_size, self._padding, self._dropout, self._maxpool)
+        return s
 
 
 class ModConnectionGene(object):

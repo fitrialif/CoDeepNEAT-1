@@ -37,29 +37,31 @@ def load(file):
         #Config.prob_mutatehorizontalflips = float(parameters.get('blueprint', 'prob_mutatehorizontalflips'))
 
         # Module
+        Config.modpopsize = int(parameters.get('module', 'modpopsize'))
         Config.min_size = int(parameters.get('module', 'min_size'))
         Config.max_size = int(parameters.get('module', 'max_size'))
         Config.size_mutation_power = float(parameters.get('module', 'size_mutation_power'))
         Config.min_ksize = int(parameters.get('module', 'min_ksize'))
         Config.max_ksize = int(parameters.get('module', 'max_ksize'))
-        Config.min_stride = int(parameters.get('module', 'min_stride'))
-        Config.max_stride = int(parameters.get('module', 'max_stride'))
+        #Config.min_stride = int(parameters.get('module', 'min_stride'))
+        #Config.max_stride = int(parameters.get('module', 'max_stride'))
         Config.min_drop = float(parameters.get('module', 'min_drop'))
         Config.max_drop = float(parameters.get('module', 'max_drop'))
         Config.drop_mutation_power = float(parameters.get('module', 'drop_mutation_power'))
+        Config.prob_addlayer = float(parameters.get('module', 'prob_addlayer'))
         Config.prob_mutatelayersize = float(parameters.get('module', 'prob_mutatelayersize'))
-        Config.prob_mutateactivation = float(parameters.get('module', 'prob_mutateactivation'))
+        # Config.prob_mutateactivation = float(parameters.get('module', 'prob_mutateactivation'))
         Config.prob_mutatekernel = float(parameters.get('module', 'prob_mutatekernel'))
-        Config.prob_mutatestride = float(parameters.get('module', 'prob_mutatestride'))
+        # Config.prob_mutatestride = float(parameters.get('module', 'prob_mutatestride'))
         Config.prob_mutatepadding = float(parameters.get('module', 'prob_mutatepadding'))
         Config.prob_mutatedrop = float(parameters.get('module', 'prob_mutatedrop'))
         Config.prob_mutatemaxpool = float(parameters.get('module', 'prob_mutatemaxpool'))
-        Config.prob_mutatebatchnorm = float(parameters.get('module', 'prob_mutatebatchnorm'))
+        # Config.prob_mutatebatchnorm = float(parameters.get('module', 'prob_mutatebatchnorm'))
 
 
         # GA
         Config.pop_size = int(parameters.get('genetic', 'pop_size'))
-        Config.max_fitness_threshold = float(parameters.get('genetic','max_fitness_threshold'))
+        Config.max_fitness_threshold = float(parameters.get('genetic', 'max_fitness_threshold'))
         Config.prob_addconn = float(parameters.get('genetic', 'prob_addconn'))
         Config.prob_addnode = float(parameters.get('genetic', 'prob_addnode'))
         Config.elitism = float(parameters.get('genetic', 'elitism'))
@@ -123,6 +125,7 @@ class Config:
     max_drop = None
     drop_mutation_power = None
     # Probabilities of changing values
+    prob_addlayer = None
     prob_mutatelayersize = None
     prob_mutateactivation = None
     prob_mutatekernel = None
