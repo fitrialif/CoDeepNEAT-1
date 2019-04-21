@@ -306,7 +306,6 @@ class FFChromosome(Chromosome):
     def __init__(self, parent1_id, parent2_id, node_gene_type, conn_gene_type):
         super(FFChromosome, self).__init__(parent1_id, parent2_id, node_gene_type, conn_gene_type)
         self.__node_order = [] # hidden node order (for feedforward networks)
-        print "ended FFChromosome.__init__"
 
     node_order = property(lambda self: self.__node_order)
 

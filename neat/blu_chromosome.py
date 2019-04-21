@@ -187,7 +187,7 @@ if __name__ == '__main__':
     c = Blu_Chromosome.create_minimal_blueprint()
 
     # check the result
-    visualize.draw_blu(c, 'premutate')   # for feedforward nets
+    visualize.draw_blu(c, 'blu_premutate')   # for feedforward nets
     # print the chromosome
     print "intial genome"
     print str(c)
@@ -195,7 +195,7 @@ if __name__ == '__main__':
     for i in range(15):
         c.mutate()
 
-    visualize.draw_blu(c, 'postmutate')
+    visualize.draw_blu(c, 'blu_postmutate')
     print "post mutation genome"
     print str(c)
 
