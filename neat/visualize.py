@@ -14,6 +14,7 @@ except:
     has_pydot = False
 
 import random
+from mod_genes import ModNodeGene, ConvModGene
 
 def draw_net(chromosome, id=''):
     ''' Receives a chromosome and draws a neural network with arbitrary topology. '''
@@ -76,8 +77,9 @@ def draw_ff(chromosome, outfile):
     else:
         print 'You do not have the PyDot package.'
 
+
 def draw_blu(chromosome, outfile):
-    ''' Draws a feedforward neural network '''
+    ''' Draws a blueprint '''
 
     output = 'digraph G {\n  node [shape=circle, fontsize=9, height=0.2, width=0.2]'
 
@@ -106,6 +108,42 @@ def draw_blu(chromosome, outfile):
         g[0].write(outfile + '.svg', prog='dot', format='svg')
     else:
         print 'You do not have the PyDot package.'
+
+
+def draw_module(chromosome, outfile):
+    ''' Draws a module '''
+
+    if chromosome.node_gene_type == ConvModGene:
+        output = 'digraph G {\n  node [shape=rectangle, fontsize=9, height=0.2, width=0.2]'
+    elif chromosome.node_gene_type == ModNodeGene:
+        output = 'digraph G {\n  node [shape=circle, fontsize=9, height=0.2, width=0.2]'
+
+    # subgraph for inputs and outputs
+    output += '\n  subgraph cluster_inputs { \n  node [style=filled, shape=box] \n    color=white'
+    for ng in chromosome.node_genes:
+        if ng.type == 'INPUT':
+            output += '\n    ' + str(ng.id)
+    output += '\n  }'
+
+    output += '\n  subgraph cluster_outputs { \n    node [style=filled, color=lightblue] \n    color=white'
+    for ng in chromosome.node_genes:
+        if ng.type == 'OUTPUT':
+            output += '\n    ' + str(ng.id)
+    output += '\n  }'
+    # topology
+    for cg in chromosome.conn_genes:
+        output += '\n  ' + str(cg.innodeid) + ' -> ' + str(cg.outnodeid)
+        if cg.enabled is False:
+            output += ' [style=dotted, color=cornflowerblue]'
+
+    output += '\n }'
+
+    if has_pydot:
+        g = pydot.graph_from_dot_data(output)
+        g[0].write(outfile + '.svg', prog='dot', format='svg')
+    else:
+        print 'You do not have the PyDot package.'
+
 
 def plot_stats(stats):
     ''' Plots the population's average and best fitness. '''
