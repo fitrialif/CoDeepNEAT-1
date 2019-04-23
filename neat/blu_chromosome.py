@@ -1,5 +1,6 @@
 import random
 import math
+from copy import deepcopy
 from config import Config, load
 import genes
 from chromosome import FFChromosome
@@ -115,7 +116,39 @@ class Blu_Chromosome(FFChromosome):
             self.learnrate = Config.min_learnrate
 
     def distance(self, other):
-        pass
+        """ Returns the distance between this chromosome and the other. """
+        if len(self._connection_genes) > len(other._connection_genes):
+            chromo1 = self
+            chromo2 = other
+        else:
+            chromo1 = other
+            chromo2 = self
+
+        matching = 0
+        disjoint = 0
+        excess = 0
+
+        max_cg_chromo2 = max(chromo2._connection_genes.values())
+
+        for cg1 in chromo1._connection_genes.values():
+            try:
+                cg2 = chromo2._connection_genes[cg1.key]
+            except KeyError:
+                if cg1 > max_cg_chromo2:
+                    excess += 1
+                else:
+                    disjoint += 1
+            else:
+                # Homologous genes
+                matching += 1
+
+        disjoint += len(chromo2._connection_genes) - matching
+
+        # assert(matching > 0) # this can't happen
+        distance = Config.excess_coeficient * excess + \
+                   Config.disjoint_coeficient * disjoint
+
+        return distance
 
     def size(self):
         # Number of hidden nodes
@@ -185,7 +218,7 @@ if __name__ == '__main__':
 
     # creates a chromosome for recurrent networks
     c = Blu_Chromosome.create_minimal_blueprint()
-
+    c1 = deepcopy(c)
     # check the result
     visualize.draw_blu(c, 'blu_premutate')   # for feedforward nets
     # print the chromosome
@@ -194,7 +227,7 @@ if __name__ == '__main__':
 
     for i in range(15):
         c.mutate()
-
+    c2 = deepcopy(c)
     visualize.draw_blu(c, 'blu_postmutate')
     print "post mutation genome"
     print str(c)
@@ -202,3 +235,14 @@ if __name__ == '__main__':
     c.cullDisabled()
     print "pruned disabled"
     print str(c)
+    c3 = deepcopy(c)
+
+    print "Distances\n\tPremutate vs Post"
+    s = "\t" + str(c.distance(c1))
+    print s
+    print "\tPost vs Post"
+    s = "\t" + str(c2.distance(c2))
+    print s
+    print "\tPost vs Culled"
+    s = "\t" + str(c3.distance(c2))
+    print s
