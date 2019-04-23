@@ -177,6 +177,8 @@ if __name__ == '__main__':
     node_gene_type = ConvModGene         # standard neuron model
     conn_gene_type = ModConnectionGene   # and connection link
 
+    print "Testing module chromosome functions with excessive configuration parameters"
+
     # Necessary config values
     load('template_config')
     Config.min_size = 32

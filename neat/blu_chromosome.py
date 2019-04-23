@@ -205,6 +205,9 @@ if __name__ == '__main__':
     # define some attributes
     node_gene_type = BluNodeGene        # standard neuron model
     conn_gene_type = BluConnectionGene   # and connection link
+
+    print "Testing blueprint chromosome functions with excessive configuration parameters"
+
     load('template_config')
     Config.input_nodes = [32, 32, 3]          # number of inputs
     Config.output_nodes = 10                  # number of outputs
