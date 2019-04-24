@@ -58,8 +58,6 @@ class Blu_Chromosome(FFChromosome):
         new_conn1, new_conn2 = conn_to_split.split(ng.id)
         self._connection_genes[new_conn1.key] = new_conn1
         self._connection_genes[new_conn2.key] = new_conn2
-        print "_mutate_add_node"
-        print self.__node_order
         # Add node to node order list: after the presynaptic node of the split connection
         # and before the postsynaptic node of the split connection
         if self._node_genes[conn_to_split.innodeid - 1].type == 'HIDDEN':
@@ -248,4 +246,7 @@ if __name__ == '__main__':
     print s
     print "\tPost vs Culled"
     s = "\t" + str(c3.distance(c2))
+    print s
+    print "\tPre vs Culled"
+    s = "\t" + str(c3.distance(c1))
     print s

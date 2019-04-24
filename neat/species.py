@@ -9,13 +9,13 @@ class Species(object):
 
     def __init__(self, first_individual, previous_id=None):
         """ A species requires at least one individual to come to existence """
-        self.__id = self.__get_new_id(previous_id)    # species's id
-        self.__age = 0                                # species's age
-        self.__subpopulation = []                     # species's individuals
+        self.__id = self.__get_new_id(previous_id)  # species's id
+        self.__age = 0  # species's age
+        self.__subpopulation = []  # species's individuals
         self.add(first_individual)
-        self.hasBest = False                        # Does this species has the best individual of the population?
+        self.hasBest = False  # Does this species has the best individual of the population?
         self.spawn_amount = 0
-        self.no_improvement_age = 0                 # the age species has shown no improvements on average
+        self.no_improvement_age = 0  # the age species has shown no improvements on average
 
         self.__last_avg_fitness = 0
 

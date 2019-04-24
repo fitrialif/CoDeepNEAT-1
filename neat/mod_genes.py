@@ -25,7 +25,7 @@ class ModNodeGene(object):
     activation_type = property(lambda self: self._activation_type)
 
     def __str__(self):
-        return "Node %2d %6s, size %d" \
+        return "Node %2d, %6s, size %d" \
                 %(self._id, self._type, self._layersize)
 
     def get_child(self, other):
@@ -156,7 +156,7 @@ class ConvModGene(ModNodeGene):
 
     def __str__(self):
         s = super(ConvModGene, self).__str__()
-        s += "\n\tksize: %1d padding: %5s drop: %5f maxpool: %s" \
+        s += "\n\tksize: %1d, padding: %5s, drop: %5f, maxpool: %s" \
              %(self.kernel_size, self._padding, self._dropout, self._maxpool)
         return s
 

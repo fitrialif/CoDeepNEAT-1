@@ -177,7 +177,7 @@ if __name__ == '__main__':
     node_gene_type = ConvModGene         # standard neuron model
     conn_gene_type = ModConnectionGene   # and connection link
 
-    print "Testing module chromosome functions with excessive configuration parameters"
+    print "Testing module chromosome functions with excessive configuration parameters\n"
 
     # Necessary config values
     load('template_config')
@@ -188,8 +188,8 @@ if __name__ == '__main__':
     Config.max_ksize = 5
     Config.min_drop = 0.0
     Config.max_drop = 0.7
-    Config.drop_mutation_power = 0.05
-    Config.prob_addlayer = 1
+    Config.drop_mutation_power = 0.005
+    Config.prob_addlayer = 0.5
     Config.prob_mutatelayersize = 0.5
     Config.prob_mutatekernel = 0.5
     Config.prob_mutatepadding = 0.5
@@ -200,20 +200,20 @@ if __name__ == '__main__':
     c1 = deepcopy(c)
     visualize.draw_module(c, 'mod_premutate')
     print "initial geneome"
-    print str(c)
+    print str(c) + '\n'
 
     for i in range(15):
         c.mutate()
 
     visualize.draw_module(c, 'mod_postmutate')
     print "post mutate geneome"
-    print str(c)
+    print str(c) + '\n'
     c2 = deepcopy(c)
 
     c.cullDisabled()
     visualize.draw_module(c, "mod_post_cull")
     print "post cull"
-    print str(c)
+    print str(c) + '\n'
     c3 = deepcopy(c)
 
     print "Distances\n\tPremutate vs Post"
@@ -224,4 +224,7 @@ if __name__ == '__main__':
     print s
     print "\tPost vs Culled"
     s = "\t" + str(c3.distance(c2))
+    print s
+    print "\tPre vs Culled"
+    s = "\t" + str(c3.distance(c1))
     print s
