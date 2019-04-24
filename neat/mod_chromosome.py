@@ -15,9 +15,8 @@ class Mod_Chromosome(FFChromosome):
     _id = 0
 
     def __init__(self, parent1_id, parent2_id,
-                 node_gene_type=ModConnectionGene, conn_gene_type=ModConnectionGene):
+                 node_gene_type=ConvModGene, conn_gene_type=ModConnectionGene):
         super(Mod_Chromosome, self).__init__(parent1_id, parent2_id, node_gene_type, conn_gene_type)
-        self.__node_order = []
 
     node_gene_type = property(lambda self: self._node_gene_type)
 
@@ -46,7 +45,7 @@ class Mod_Chromosome(FFChromosome):
             ig = self._node_genes[0]
             # Add a nother node "downstream for the only node"
             if self._node_gene_type == ConvModGene:
-                ng = self._node_gene_type(len(self._node_genes) + 1, 'OUTPUT', Config.min_size,
+                ng = self._node_gene_type(2, 'OUTPUT', Config.min_size,
                                           'relu', Config.min_ksize, None, 'same', Config.min_drop,
                                           True, None)
             elif self._node_gene_type == ModNodeGene:
@@ -76,17 +75,17 @@ class Mod_Chromosome(FFChromosome):
             # Add node to node order list: after the presynaptic node of the split connection
             # and before the postsynaptic node of the split connection
             if self._node_genes[conn_to_split.innodeid - 1].type == 'HIDDEN':
-                mini = self.__node_order.index(conn_to_split.innodeid) + 1
+                mini = self.node_order.index(conn_to_split.innodeid) + 1
             else:
                 # Presynaptic node is an input node, not hidden node
                 mini = 0
             if self._node_genes[conn_to_split.outnodeid - 1].type == 'HIDDEN':
-                maxi = self.__node_order.index(conn_to_split.outnodeid)
+                maxi = self.node_order.index(conn_to_split.outnodeid)
             else:
                 # Postsynaptic node is an output node, not hidden node
-                maxi = len(self.__node_order)
-            self.__node_order.insert(random.randint(mini, maxi), ng.id)
-            assert(len(self.__node_order) == len([n for n in self.node_genes if n.type == 'HIDDEN']))
+                maxi = len(self.node_order)
+            self.node_order.insert(random.randint(mini, maxi), ng.id)
+            assert(len(self.node_order) == len([n for n in self.node_genes if n.type == 'HIDDEN']))
             return (ng, conn_to_split)
 
     def _mutate_add_connection(self):
@@ -132,13 +131,15 @@ class Mod_Chromosome(FFChromosome):
 
     def size(self):
         # Number of hidden nodes
-        num_hidden = len(self.__node_order)
+        num_hidden = len(self.node_order)
         # Number of enable connections
         conns_enabled = sum([1 for cg in self._connection_genes.values() if cg.enabled])
         return (num_hidden, conns_enabled)
 
     def __str__(self):
-        s = "Nodes:"
+        s = "node order:"
+        s += str(self.node_order)
+        s += "\nNodes:"
         for ng in self._node_genes:
             s += "\n\t" + str(ng)
         s += "\nConnections:"
@@ -150,7 +151,7 @@ class Mod_Chromosome(FFChromosome):
 
     @classmethod
     def create_minimal_module(cls):
-        c = cls(0, 0, node_gene_type, conn_gene_type)
+        c = cls(0, 0)
         id = 1
         # Create an input node
         c._node_genes.append(ConvModGene(id, 'INPUT', Config.min_size, 'relu', Config.min_ksize, Config.min_stride,
@@ -189,7 +190,7 @@ if __name__ == '__main__':
     Config.min_drop = 0.0
     Config.max_drop = 0.7
     Config.drop_mutation_power = 0.005
-    Config.prob_addlayer = 0.5
+    Config.prob_addlayer = 1
     Config.prob_mutatelayersize = 0.5
     Config.prob_mutatekernel = 0.5
     Config.prob_mutatepadding = 0.5

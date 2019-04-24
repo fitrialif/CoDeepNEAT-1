@@ -14,7 +14,6 @@ class ModNodeGene(object):
         self._type = nodetype
         self._layersize = layersize
         self._activation_type = activation_type
-        print self._activation_type
 
         assert(self._type in ('INPUT', 'OUTPUT', 'HIDDEN'))
         assert(self._activation_type in ('tanh', 'relu', 'sigmoid'))
@@ -69,17 +68,17 @@ class ConvModGene(ModNodeGene):
         self._layersize = numfilts
         self._activation_type = activation_type
         self._kernel_size = k_size
-        # self._strides = strides
+        self._strides = strides
         self._padding = padding
         self._dropout = dropout
         self._maxpool = maxpool
-        #self._batchnorm = batchnorm
+        self._batchnorm = batchnorm
 
-        assert(self._layersize in range(Config.min_size, Config.max_size))
-        assert(self._kernel_size in range(Config.min_ksize, Config.max_ksize))
+        assert(self._layersize in range(Config.min_size, Config.max_size+1))
+        assert(self._kernel_size in range(Config.min_ksize, Config.max_ksize+1))
         # assert(self._strides in range(Config.min_stride, Config.max_stride))
         assert(self._padding in ('same', 'valid'))
-        assert(self._dropout in np.linspace(Config.min_drop, Config.max_drop, 1000))
+        assert(self._dropout >= Config.min_drop and self._dropout <= Config.max_drop)
         assert(self._maxpool in (True, False))
         # assert(self._batchnorm in (True, False))
 
@@ -95,6 +94,7 @@ class ConvModGene(ModNodeGene):
     # TODO: Implement mutators
     def _mutate_size(self):
         self._layersize += random.gauss(0, 1) * Config.size_mutation_power
+        self._layersize = round(self._layersize)
         if self._layersize > Config.max_size:
             self._layersize = Config.max_size
         elif self._layersize < Config.min_size:
@@ -141,22 +141,28 @@ class ConvModGene(ModNodeGene):
         #if r() < Config.prob_mutatebatch:
         #    self._mutate_batchnorm()
 
-    def get_child(self):
+    def get_child(self, other):
         assert(self.id == self.id)
 
-        ng = ConvModGene(self._id, self._layersize, self._activation_type,
-                         self._kernel_size, self._strides, self._padding,
-                         self._dropout, self._maxpool, self._batchnorm)
+        ng = ConvModGene(self._id, self._type,
+                         random.choice((self._layersize, other._layersize)),
+                         random.choice((self._activation_type, other._activation_type)),
+                         random.choice((self._kernel_size, other._kernel_size)),
+                         random.choice((self._strides, other._strides)),
+                         random.choice((self._padding, other._padding)),
+                         random.choice((self._dropout, other._dropout)),
+                         random.choice((self._maxpool, other._maxpool)),
+                         random.choice((self._batchnorm, other._batchnorm)))
         return ng
 
     def copy(self):
-        return ConvModGene(self._id, self._layersize, self._activation_type,
+        return ConvModGene(self._id, self._type, self._layersize, self._activation_type,
                            self._kernel_size, self._strides, self._padding,
                            self._dropout, self._maxpool, self._batchnorm)
 
     def __str__(self):
         s = super(ConvModGene, self).__str__()
-        s += "\n\tksize: %1d, padding: %5s, drop: %5f, maxpool: %s" \
+        s += "\n\t ksize: %1d, padding: %5s, drop: %5f, maxpool: %s" \
              %(self.kernel_size, self._padding, self._dropout, self._maxpool)
         return s
 

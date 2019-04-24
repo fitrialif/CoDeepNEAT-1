@@ -1,13 +1,15 @@
 import gzip
 import random
 import math
+import numpy as np
 import time
 import cPickle as pickle
-from config import Config
+from config import Config, load
 import species
 import chromosome
 import blu_chromosome
 import mod_chromosome
+from visualize import plot_species
 
 
 class Population(object):
@@ -15,7 +17,7 @@ class Population(object):
     evaluate = None  # Evaluates the entire population. You need to override
                      # this method in your experiments
 
-    def __init__(self, popsize, gtype, checkpoint_file=None):
+    def __init__(self, popsize=1, gtype=chromosom.FFChromosome, checkpoint_file=None):
 
         if checkpoint_file:
             # start from a previous point: creates an 'empty'
@@ -24,6 +26,7 @@ class Population(object):
         else:
             # total population size
             self.__popsize = popsize
+            self.__population = []
             # currently living species
             self.__species = []
             # species history
@@ -38,6 +41,7 @@ class Population(object):
 
     stats = property(lambda self: (self.__best_fitness, self.__avg_fitness))
     species_log = property(lambda self: self.__species_log)
+    population = property(lambda self: self.__population)
 
     def __resume_checkpoint(self, checkpoint):
         """ Resumes the simulation from a previous saved point. """
@@ -83,17 +87,17 @@ class Population(object):
 
         if gtype == 'blueprint':
             genotypes = blu_chromosome.Blu_Chromosome
-            create = blu_chromosome.create_minimal_blueprint
+            create = blu_chromosome.Blu_Chromosome.create_minimal_blueprint
         elif gtype == 'module':
             genotypes = mod_chromosome.Mod_Chromosome
-            create = mod_chromosome.create_minimal_module
+            create = mod_chromosome.Mod_Chromosome.create_minimal_module
         else:
             genotypes = chromosome.FFChromosome
-            create = create_minimally_connected
+            #create = create_minimally_connected
 
         self.__population = []
         for i in xrange(self.__popsize):
-            g = genotypes.create()
+            g = create()
             self.__population.append(g)
 
     def __repr__(self):
@@ -213,9 +217,12 @@ class Population(object):
 
     def __log_species(self):
         """ Logging species data for visualizing speciation """
-        higher = max([s.id for s in self.__species])
+        if len(self.__species) < 1:
+            print "Skipping logging for species, no species present"
+            return
+        max_species_id = max([s.id for s in self.__species])
         temp = []
-        for i in xrange(1, higher + 1):
+        for i in xrange(1, max_species_id + 1):
             found_specie = False
             for s in self.__species:
                 if i == s.id:
@@ -226,22 +233,24 @@ class Population(object):
                 temp.append(0)
         self.__species_log.append(temp)
 
+    def _dump_species_log(self, fname="species_log"):
+        n = np.array(self.__species_log)
+        filename = fname + ".dat" if ".dat" not in fname else fname
+        n.dump(fname)
+
     def __population_diversity(self):
         """ Calculates the diversity of population: total average weights,
             number of connections, nodes """
 
         num_nodes = 0
         num_conns = 0
-        avg_weights = 0.0
 
         for c in self:
             num_nodes += len(c.node_genes)
             num_conns += len(c.conn_genes)
-            for cg in c.conn_genes:
-                avg_weights += cg.weight
 
         total = len(self)
-        return (num_nodes / total, num_conns / total, avg_weights / total)
+        return (num_nodes / total, num_conns / total)
 
     def epoch(self, n, report=True, save_best=False, checkpoint_interval=10,
               checkpoint_generation=None):
@@ -342,15 +351,19 @@ class Population(object):
                                 # self.remove(c)
                     self.__species.remove(s)
 
+            if len(self.__species) < 1:
+                print "Ending on epoch %d, no species left"%(g)
+                return
             # Logging speciation stats
             self.__log_species()
 
             if report:
-                #print 'Poluation size: %d \t Divirsity: %s' %(len(self), self.__population_diversity())
+                print 'Poluation size: %d \t Diversity: %s' %(len(self), self.__population_diversity())
+                #for indiv in self.__population:
+                #    print str(indiv)
                 print 'Population\'s average fitness: %3.5f stdev: %3.5f' %(self.__avg_fitness[-1], self.stdeviation())
                 print 'Best fitness: %2.12s - size: %s - species %s - id %s' \
                     %(best.fitness, best.size(), best.species_id, best.id)
-
                 # print some "debugging" information
                 print 'Species length: %d totalizing %d individuals' \
                         %(len(self.__species), sum([len(s) for s in self.__species]))
@@ -396,7 +409,8 @@ class Population(object):
                         # what if c is parent1 itself?
                         if c.species_id == parent1.species_id:
                             child = parent1.crossover(c)
-                            new_population.append(child.mutate())
+                            child.mutate()
+                            new_population.append(child)
                             found = True
                             break
                     if not found:
@@ -407,6 +421,7 @@ class Population(object):
 
             assert self.__popsize == len(new_population), 'Different population sizes!'
             # Updates current population
+
             self.__population = new_population[:]
 
             if checkpoint_interval is not None and time.time() > t0 + 60 * checkpoint_interval:
@@ -418,15 +433,56 @@ class Population(object):
 
 if __name__ == '__main__':
 
+    print "Testing CoDeepNEAT population with excessive configuration parameters\n"
+
+    # Necessary config values
+    load('template_config')
+    Config.input_nodes = [32, 32, 3]          # number of inputs
+    Config.output_nodes = 10                  # number of outputs
+    Config.modpopsize = 10
+    Config.max_fitness_threshold = 2
+    Config.prob_addmodule = 0.5
+    Config.prob_addconn = 0.03
+    Config.min_learnrate = 0.001
+    Config.max_learnrate = 0.1
+    Config.prob_mutatelearnrate = 1
+    Config.learnrate_mutation_power = 0.002
+    Config.min_size = 32
+    Config.max_size = 256
+    Config.size_mutation_power = 3
+    Config.min_ksize = 3
+    Config.max_ksize = 5
+    Config.min_drop = 0.0
+    Config.max_drop = 0.7
+    Config.drop_mutation_power = 0.005
+    Config.prob_addlayer = 0.5
+    Config.prob_mutatelayersize = 0.5
+    Config.prob_mutatekernel = 0.5
+    Config.prob_mutatepadding = 0.5
+    Config.prob_mutatedrop = 0.5
+    Config.prob_mutatemaxpool = 0.5
+
     # sample fitness function
     def eval_fitness(population):
-        for individual in population:
+        for individual in population.population:
             individual.fitness = 1.0
 
     # set fitness function
     Population.evaluate = eval_fitness
 
     # creates the population
-    pop = Population()
+    b_pop = Population(10, 'blueprint')
+    m_pop = Population(15, 'module')
     # runs the simulation for 250 epochs
-    pop.epoch(250)
+    print "-- Start Blueprint Test --"
+    b_pop.epoch(100)
+    print "-- End Blueprint Test --"
+    print "-- Start Module Test --"
+    m_pop.epoch(100, True, True, None, 10)
+    print "-- End Module Test --"
+    plot_species(b_pop.species_log, "blu_speciation")
+    plot_species(m_pop.species_log, "mod_speciation")
+    print(m_pop.species_log)
+    m_pop._dump_species_log("mod_species.dat")
+    x = np.load("mod_species.dat")
+    print m_pop.species_log == x

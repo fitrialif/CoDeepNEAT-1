@@ -36,12 +36,11 @@ class BluNodeGene(NodeGene):
         assert(self._id == other._id)
 
         ng = BluNodeGene(self._id, self._type,
-                         random.choice(self._modPointer, other._modPointer))
+                         random.choice((self._modPointer, other._modPointer)))
         return ng
 
     def copy(self):
-        return NodeGene(self._id, self._type, self._bias,
-                        self._response, self._activation_type)
+        return BluNodeGene(self._id, self._type, self.modPointer)
 
     def mutate(self):
         if self._type != 'HIDDEN':  # Don't modify input & output nodes

@@ -44,7 +44,7 @@ class Blu_Chromosome(FFChromosome):
     def _inherit_genes(child, parent1, parent2):
         """ Applies the crossover operator. """
         super(FFChromosome, child)._inherit_genes(parent1, parent2)
-
+        child.__node_order = parent1.__node_order[:]
         # Crossover the learnrate from the fittest parent
         child.learnrate = parent1.learnrate
 
@@ -161,7 +161,7 @@ class Blu_Chromosome(FFChromosome):
 
     @classmethod
     def create_minimal_blueprint(cls):
-        c = cls(0, 0, node_gene_type, conn_gene_type)
+        c = cls(0, 0)
         id = 1
         # Create input node
         c._node_genes.append(c._node_gene_type(id, 'INPUT', -1))

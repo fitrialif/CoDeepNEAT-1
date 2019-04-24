@@ -311,9 +311,7 @@ class FFChromosome(Chromosome):
 
     def _inherit_genes(child, parent1, parent2):
         super(FFChromosome, child)._inherit_genes(parent1, parent2)
-
-        child.__node_order = parent1.__node_order[:]
-
+        child.__node_order = parent1.node_order[:]
         assert(len(child.__node_order) == len([n for n in child.node_genes if n.type == 'HIDDEN']))
 
     def _mutate_add_node(self):

@@ -98,7 +98,6 @@ class Species(object):
 
         self.__subpopulation.sort()     # sort species's members by their fitness
         self.__subpopulation.reverse()  # best members first
-
         if Config.elitism:
             # TODO: Wouldn't it be better if we set elitism=2,3,4...
             # depending on the size of each species?
@@ -126,18 +125,19 @@ class Species(object):
 
                 assert parent1.species_id == parent2.species_id, "Parents has different species id."
                 child = parent1.crossover(parent2)
-                offspring.append(child.mutate())
+                child.mutate()
+                offspring.append(child)
             else:
                 # mutate only
                 parent1 = self.__subpopulation[0]
                 # TODO: temporary hack - the child needs a new id (not the father's)
                 child = parent1.crossover(parent1)
-                offspring.append(child.mutate())
+                child.mutate()
+                offspring.append(child)
 
         # reset species (new members will be added again when speciating)
         self.__subpopulation = []
 
         # select a new random representant member
         self.representant = random.choice(offspring)
-
         return offspring

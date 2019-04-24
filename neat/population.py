@@ -22,6 +22,7 @@ class Population(object):
         else:
             # total population size
             self.__popsize = Config.pop_size
+            self.__population = []
             # currently living species
             self.__species = []
             # species history
