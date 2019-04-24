@@ -16,6 +16,7 @@ except:
 import random
 from mod_genes import ModNodeGene, ConvModGene
 
+
 def draw_net(chromosome, id=''):
     ''' Receives a chromosome and draws a neural network with arbitrary topology. '''
     output = 'digraph G {\n  node [shape=circle, fontsize=9, height=0.2, width=0.2]'
@@ -45,6 +46,7 @@ def draw_net(chromosome, id=''):
         g.write('phenotype'+id+'.svg', prog='dot', format='svg')
     else:
         print 'You do not have the PyDot package.'
+
 
 def draw_ff(chromosome, outfile):
     ''' Draws a feedforward neural network '''
@@ -167,6 +169,7 @@ def plot_stats(stats):
     else:
         print 'You dot not have the Biggles package.'
 
+
 def plot_spikes(spikes):
     ''' Plots the trains for a single spiking neuron. '''
     if has_biggles:
@@ -183,11 +186,12 @@ def plot_spikes(spikes):
     else:
         print 'You dot not have the Biggles package.'
 
-def plot_species(species_log):
+
+def plot_species(species_log, fname="speciation"):
     ''' Visualizes speciation throughout evolution. '''
     if has_biggles:
         plot = biggles.FramedPlot()
-        plot.title = "Speciation"
+        plot.title = fname
         plot.ylabel = r"Size per Species"
         plot.xlabel = r"Generations"
         generation = [i for i in xrange(len(species_log))]
@@ -215,7 +219,7 @@ def plot_species(species_log):
             plot.add(biggles.FillBetween(generation, curves[i-1], generation, curves[i], color=random.randint(0,90000)))
 
         
-        plot.write_img(1024, 800, 'speciation.svg')
+        plot.write_img(1024, 800, fname+'.svg')
 
     else:
         print 'You dot not have the Biggles package.'
