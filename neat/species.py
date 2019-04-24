@@ -2,9 +2,10 @@
 import random
 from config import Config
 
+
 class Species(object):
     """ A subpopulation containing similar individiduals """
-    __id = 0 # global species id counter
+    __id = 0  # global species id counter
 
     def __init__(self, first_individual, previous_id=None):
         """ A species requires at least one individual to come to existence """
@@ -22,7 +23,7 @@ class Species(object):
 
     members = property(lambda self: self.__subpopulation)
     age = property(lambda self: self.__age)
-    id  = property(lambda self: self.__id)
+    id = property(lambda self: self.__id)
 
     @classmethod
     def __get_new_id(cls, previous_id):
@@ -70,7 +71,7 @@ class Species(object):
             sum += c.fitness
 
         try:
-            current = sum/len(self)
+            current = sum / len(self)
         except ZeroDivisionError:
             print "Species %d, with length %d is empty! Why? " % (self.__id, len(self))
         else:  # controls species no improvement age
@@ -86,10 +87,10 @@ class Species(object):
     def reproduce(self):
         """ Returns a list of 'spawn_amount' new individuals """
 
-        offspring = [] # new offspring for this species
+        offspring = []  # new offspring for this species
         self.__age += 1  # increment species age
 
-        #print "Reproducing species %d with %d members" %(self.id, len(self.__subpopulation))
+        # print "Reproducing species %d with %d members" %(self.id, len(self.__subpopulation))
 
         # this condition is useless since no species with spawn_amount < 0 will
         # reach this point - at least it shouldn't happen.
@@ -104,7 +105,7 @@ class Species(object):
             offspring.append(self.__subpopulation[0])
             self.spawn_amount -= 1
 
-        survivors = int(round(len(self)*Config.survival_threshold)) # keep a % of the best individuals
+        survivors = int(round(len(self) * Config.survival_threshold))  # keep a % of the best individuals
 
         if survivors > 0:
             self.__subpopulation = self.__subpopulation[:survivors]
