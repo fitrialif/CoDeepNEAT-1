@@ -28,7 +28,7 @@ class BluNodeGene(NodeGene):
     modPointer = property(lambda self: self._modPointer)
 
     def __str__(self):
-        return "Node: %2d type: %6s, modulePointer: %2d" \
+        return "Node: %d type: %6s, modulePointer: %s" \
                 %(self._id, self._type, self._modPointer)
 
     def get_child(self, other):
@@ -49,7 +49,12 @@ class BluNodeGene(NodeGene):
             self.__mutate_modpointer()
 
     def __mutate_modpointer(self):
-        return random.choice(range(Config.modpopsize))
+        if self._type == 'HIDDEN':
+            return random.choice(Config.mod_species)
+
+    def updateModPointer(self):
+        if self._modPointer not in Config.mod_species and self._type is 'HIDDEN':
+            self._modPointer = random.choice(Config.mod_species)
 
 
 class BluConnectionGene(object):
@@ -81,9 +86,10 @@ class BluConnectionGene(object):
     key = property(lambda self: (self.__in, self.__out))
 
     def mutate(self):
-        r = random.random
-        if r() < Config.prob_togglelink:
-            self.enable()
+        pass
+        #r = random.random
+        #if r() < Config.prob_togglelink:
+        #    self.enable()
 
     def enable(self):
         """ Enables a link. """

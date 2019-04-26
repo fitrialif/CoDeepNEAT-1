@@ -30,8 +30,8 @@ class Blu_Chromosome(FFChromosome):
             self._mutate_learnrate()
         if r() < Config.prob_addmodule:
             self._mutate_add_node()
-        elif r() < Config.prob_addconn:
-            self._mutate_add_connection()
+        # elif r() < Config.prob_addconn:
+        #    self._mutate_add_connection()
         else:
             for cg in self._connection_genes.values():
                 cg.mutate()
@@ -50,7 +50,11 @@ class Blu_Chromosome(FFChromosome):
 
     def _mutate_add_node(self):
         # Choose a random connection to split
-        conn_to_split = random.choice(self._connection_genes.values())
+        possibilities = self._connection_genes.values()
+        conn_to_split = random.choice(possibilities)
+        while not conn_to_split.enabled:
+            possibilities.remove(conn_to_split)
+            conn_to_split = random.choice(possibilities)
         # Add a new neuron that points to a random module species
         ng = self._node_gene_type(len(self._node_genes) + 1, 'HIDDEN',
                                   random.randint(1, Config.modpopsize))
@@ -158,6 +162,9 @@ class Blu_Chromosome(FFChromosome):
     def cullDisabled(self):
         self._connection_genes = {k: cg for k, cg in self._connection_genes.iteritems() if cg.enabled}
 
+    def updateModPointers(self):
+        for n in self._node_genes:
+            n.updateModPointer()
 
     @classmethod
     def create_minimal_blueprint(cls):
@@ -200,9 +207,15 @@ class Blu_Chromosome(FFChromosome):
 if __name__ == '__main__':
     # Example
     import visualize
+    from cdn_population import CDN_Population as pop
+    from mod_chromosome import Mod_Chromosome
     # define some attributes
     node_gene_type = BluNodeGene        # standard neuron model
     conn_gene_type = BluConnectionGene   # and connection link
+
+    def eval_fitness(population):
+        for individual in population.population:
+            individual.fitness = 1.0
 
     print "Testing blueprint chromosome functions with excessive configuration parameters"
 
@@ -216,6 +229,11 @@ if __name__ == '__main__':
     Config.max_learnrate = 0.1
     Config.prob_mutatelearnrate = 1
     Config.learnrate_mutation_power = 0.002
+
+    mod_pop = pop(10, Mod_Chromosome)
+    for i in range(11):
+        eval_fitness(mod_pop)
+        mod_pop.step(False)
 
     # creates a chromosome for recurrent networks
     c = Blu_Chromosome.create_minimal_blueprint()
@@ -234,6 +252,7 @@ if __name__ == '__main__':
     print str(c)
 
     c.cullDisabled()
+    visualize.draw_blu(c, 'blu_postmutatecull')
     print "pruned disabled"
     print str(c)
     c3 = deepcopy(c)

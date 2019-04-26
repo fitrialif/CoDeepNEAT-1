@@ -17,9 +17,9 @@ def load(file):
         Config.input_nodes = str(parameters.get('phenotype', 'input_nodes'))
         Config.input_nodes = list(int(x) for x in Config.input_nodes.split(','))
         Config.output_nodes = int(parameters.get('phenotype', 'output_nodes'))
-        Config.hidden_nodes = int(parameters.get('phenotype', 'hidden_nodes'))
 
         # Blueprint
+        Config.blupopsize = int(parameters.get('blueprint', 'blupopsize'))
         Config.min_learnrate = float(parameters.get('blueprint', 'min_learnrate'))
         Config.max_learnrate = float(parameters.get('blueprint', 'max_learnrate'))
         Config.learnrate_mutation_power = float(parameters.get('blueprint', 'learnrate_mutation_power'))
@@ -45,6 +45,7 @@ def load(file):
         Config.max_ksize = int(parameters.get('module', 'max_ksize'))
         #Config.min_stride = int(parameters.get('module', 'min_stride'))
         #Config.max_stride = int(parameters.get('module', 'max_stride'))
+        Config.start_drop = float(parameters.get('module', 'start_drop'))
         Config.min_drop = float(parameters.get('module', 'min_drop'))
         Config.max_drop = float(parameters.get('module', 'max_drop'))
         Config.drop_mutation_power = float(parameters.get('module', 'drop_mutation_power'))
@@ -60,18 +61,16 @@ def load(file):
 
 
         # GA
-        Config.pop_size = int(parameters.get('genetic', 'pop_size'))
         Config.max_fitness_threshold = float(parameters.get('genetic', 'max_fitness_threshold'))
-        Config.prob_addconn = float(parameters.get('genetic', 'prob_addconn'))
-        Config.prob_addnode = float(parameters.get('genetic', 'prob_addnode'))
-        Config.elitism = float(parameters.get('genetic', 'elitism'))
+        Config.generations = int(parameters.get('genetic', 'generations'))
+        Config.elitism = bool(parameters.get('genetic', 'elitism'))
 
         # genotype compatibility
         Config.compatibility_threshold = float(parameters.get('genotype compatibility', 'compatibility_threshold'))
         Config.compatibility_change = float(parameters.get('genotype compatibility', 'compatibility_change'))
         Config.excess_coeficient = float(parameters.get('genotype compatibility', 'excess_coeficient'))
         Config.disjoint_coeficient = float(parameters.get('genotype compatibility', 'disjoint_coeficient'))
-        Config.weight_coeficient = float(parameters.get('genotype compatibility', 'weight_coeficient'))
+        Config.module_coeficient = float(parameters.get('genotype compatibility', 'module_coeficient'))
 
         # species
         Config.species_size = int(parameters.get('species', 'species_size'))
@@ -88,9 +87,9 @@ class Config:
     # phenotype config
     input_nodes = None
     output_nodes = None
-    hidden_nodes = None
 
     # Blueprint config
+    blupopsize = None
     #  Except for modpointer, these are global parameters (i.e. in chromosome)
     min_learnrate = None
     max_learnrate = None
@@ -110,6 +109,7 @@ class Config:
 
 
     # Module Config
+    mod_species = []
     #  Number of filters
     min_size = None
     max_size = None
@@ -121,6 +121,7 @@ class Config:
     min_stride = None
     max_stride = None
     # Dropout
+    start_drop = None
     min_drop = None
     max_drop = None
     drop_mutation_power = None
@@ -138,9 +139,7 @@ class Config:
     # GA config
     pop_size = None
     max_fitness_threshold = None
-    prob_addconn = None
-    prob_addnode = None
-    prob_togglelink = None
+    generations = None
     elitism = None
 
     # genotype compatibility
@@ -148,7 +147,7 @@ class Config:
     compatibility_change = None
     excess_coeficient = None
     disjoint_coeficient = None
-    weight_coeficient = None
+    module_coeficient = None
 
     # species
     species_size = None

@@ -86,7 +86,6 @@ class Species(object):
 
     def reproduce(self):
         """ Returns a list of 'spawn_amount' new individuals """
-
         offspring = []  # new offspring for this species
         self.__age += 1  # increment species age
 
@@ -113,7 +112,6 @@ class Species(object):
             self.__subpopulation = self.__subpopulation[:1]
 
         while(self.spawn_amount > 0):
-
             self.spawn_amount -= 1
 
             if len(self) > 1:
@@ -134,7 +132,6 @@ class Species(object):
                 child = parent1.crossover(parent1)
                 child.mutate()
                 offspring.append(child)
-
         # reset species (new members will be added again when speciating)
         self.__subpopulation = []
 

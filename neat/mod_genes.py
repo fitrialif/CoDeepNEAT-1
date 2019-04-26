@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import random
+import math
 from config import Config
 from itertools import product
 import numpy as np # for linspace
@@ -61,7 +62,7 @@ class ModNodeGene(object):
 
 class ConvModGene(ModNodeGene):
     def __init__(self, id, nodetype, numfilts, activation_type, k_size, strides,
-                 padding, dropout, maxpool, batchnorm):
+                 padding, dropout=None, maxpool=True, batchnorm=False):
 
         self._id = id
         self._type = nodetype
@@ -70,12 +71,15 @@ class ConvModGene(ModNodeGene):
         self._kernel_size = k_size
         self._strides = strides
         self._padding = padding
-        self._dropout = dropout
+        if dropout is None:
+            dropout = Config.start_drop
+        else:
+            self._dropout = dropout
         self._maxpool = maxpool
         self._batchnorm = batchnorm
 
-        assert(self._layersize in range(Config.min_size, Config.max_size+1))
-        assert(self._kernel_size in range(Config.min_ksize, Config.max_ksize+1))
+        assert(self._layersize in range(Config.min_size, Config.max_size + 1))
+        assert(self._kernel_size in range(Config.min_ksize, Config.max_ksize + 1))
         # assert(self._strides in range(Config.min_stride, Config.max_stride))
         assert(self._padding in ('same', 'valid'))
         assert(self._dropout >= Config.min_drop and self._dropout <= Config.max_drop)
@@ -90,18 +94,45 @@ class ConvModGene(ModNodeGene):
     maxpool = property(lambda self: self._maxpool)
     # batchnorm = property(lambda self: self._batchnorm)
 
+    def distnace(self, other):
+        filtDiff = math.fabs(self._layersize - other._layersize)
+        ksizeDiff = math.fabs(self._kernel_size - other._kernel_size)
+        #strideDiff = math.fabs(self._strides - self._strides)
+        dropDiff = math.fabs(self._dropout - self._dropout)
+
+        if self._activation_type != other._activation_type:
+            actDiff = 1
+        else:
+            actDiff = 0
+        if self._padding != other._padding:
+            padDiff = 1
+        else:
+            padDiff = 0
+        if self._maxpool != other._maxpool:
+            poolDiff = 1
+        else:
+            poolDiff = 0
+        if self._batchnorm != other._batchnorm:
+            bnDiff = 1
+        else:
+            bnDiff = 0
+
+        nodeDiff = filtDiff / (Config.max_size - Config.min_size) + dropDiff + actDiff + padDiff + poolDiff + bnDiff
+
+        return nodeDiff
+
     # Mutators. analagous to setters
     # TODO: Implement mutators
     def _mutate_size(self):
         self._layersize += random.gauss(0, 1) * Config.size_mutation_power
-        self._layersize = round(self._layersize)
+        self._layersize = int(round(self._layersize))
         if self._layersize > Config.max_size:
             self._layersize = Config.max_size
         elif self._layersize < Config.min_size:
             self._layersize = Config.min_size
 
     def _mutate_kernel(self):
-        self._kernel_size = random.randint(Config.min_ksize, Config.max_ksize)
+        self._kernel_size = random.choice((Config.min_ksize, Config.max_ksize))
 
     def _mutate_strides(self):
         self._strides = random.randint(Config.min_stride, Config.max_stride)

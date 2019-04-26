@@ -7,17 +7,17 @@ import cPickle as pickle
 from config import Config, load
 import species
 import chromosome
-import blu_chromosome
-import mod_chromosome
-from visualize import plot_species
+from chromosome import FFChromosome
+from blu_chromosome import Blu_Chromosome
+from mod_chromosome import Mod_Chromosome
 
 
-class Population(object):
+class CDN_Population(object):
     """ Manages all the species  """
     evaluate = None  # Evaluates the entire population. You need to override
                      # this method in your experiments
 
-    def __init__(self, popsize=1, gtype=chromosome.FFChromosome, checkpoint_file=None):
+    def __init__(self, popsize=1, gtype=FFChromosome, checkpoint_file=None):
 
         if checkpoint_file:
             # start from a previous point: creates an 'empty'
@@ -36,12 +36,17 @@ class Population(object):
             self.__avg_fitness = []
             self.__best_fitness = []
 
-            self.__create_population(gtype)
+            self._gtype = gtype
+            self.__create_population()
             self.__generation = -1
+            self.__elite = None
 
     stats = property(lambda self: (self.__best_fitness, self.__avg_fitness))
+    species = property(lambda self: self.__species)
     species_log = property(lambda self: self.__species_log)
     population = property(lambda self: self.__population)
+    elite = property(lambda self: self.__elite)
+    gen = property(lambda self: self.__generation)
 
     def __resume_checkpoint(self, checkpoint):
         """ Resumes the simulation from a previous saved point. """
@@ -78,22 +83,13 @@ class Population(object):
         pickle.dump(random.getstate(), file, protocol=2)
         file.close()
 
-    def __create_population(self, gtype=None):
-
-        #if Config.feedforward:
-        #    genotypes = chromosome.FFChromosome
-        #else:
-        #    genotypes = chromosome.Chromosome
-
-        if gtype == 'blueprint':
-            genotypes = blu_chromosome.Blu_Chromosome
-            create = blu_chromosome.Blu_Chromosome.create_minimal_blueprint
-        elif gtype == 'module':
-            genotypes = mod_chromosome.Mod_Chromosome
-            create = mod_chromosome.Mod_Chromosome.create_minimal_module
+    def __create_population(self):
+        if self._gtype == Blu_Chromosome:
+            create = Blu_Chromosome.create_minimal_blueprint
+        elif self._gtype == Mod_Chromosome:
+            create = Mod_Chromosome.create_minimal_module
         else:
-            genotypes = chromosome.FFChromosome
-            #create = create_minimally_connected
+            create = FFChromosome.create_minimally_connected
 
         self.__population = []
         for i in xrange(self.__popsize):
@@ -120,6 +116,10 @@ class Population(object):
 
     def __speciate(self, report=False):
         """ Group chromosomes into species by similarity """
+        if self._gtype == Blu_Chromosome:
+            for indiv in self.__population:
+                indiv.updateModPointers()
+            
         # Speciate the population
         for individual in self:
             found = False
@@ -131,7 +131,6 @@ class Population(object):
 
             if not found:  # create a new species for this lone chromosome
                 self.__species.append(species.Species(individual))
-
         # python technical note:
         # we need a "working copy" list when removing elements while looping
         # otherwise we might end up having sync issues
@@ -143,7 +142,13 @@ class Population(object):
                 # remove empty species
                 self.__species.remove(s)
 
+        if self._gtype == Mod_Chromosome:
+            Config.mod_species = [s.id for s in self.__species if len(s) > 0]
+
         self.__set_compatibility_threshold()
+
+    def speciate(self, report=False):
+        self.__speciate(report)
 
     def __set_compatibility_threshold(self):
         ''' Controls compatibility threshold '''
@@ -206,7 +211,10 @@ class Population(object):
 
         # 3. Compute spawn
         for i, s in enumerate(self.__species):
-            s.spawn_amount = int(round((species_stats[i] * self.__popsize / total_average)))
+            if total_average > 0:
+                s.spawn_amount = int(round((species_stats[i] * self.__popsize / total_average)))
+            else:
+                s.spawn_amount = int(round((species_stats[i] * self.__popsize)))
 
     def __tournament_selection(self, k=2):
         """ Tournament selection with size k (default k=2).
@@ -269,6 +277,7 @@ class Population(object):
 
         # Print some statistics
         best = self.__best_fitness[-1]
+        self.__elite = best
         # Which species has the best chromosome?
         for s in self.__species:
             s.hasBest = False
@@ -279,7 +288,7 @@ class Population(object):
         if best.fitness > Config.max_fitness_threshold:
             print '\nBest individual found in epoch %s - complexity: %s' %(self.__generation, best.size())
             if save_best:
-                file = open('best_chromo_' + str(self.__generation),'w')
+                file = open(save_dir + 'best_chromo_' + str(self.__generation), 'w')
                 pickle.dump(best, file)
                 file.close()
             return True
@@ -336,7 +345,7 @@ class Population(object):
                 self.__species.remove(s)
 
         if len(self.__species) < 1:
-            print "Ending on epoch %d, no species left"%(g)
+            print "Ending on epoch %d, no species left"%(self.__generation)
             return True
         # Logging speciation stats
         self.__log_species()
@@ -413,6 +422,8 @@ class Population(object):
                 file = open(save_dir + 'best_chromo_' + str(self.__generation),'w')
                 pickle.dump(best, file)
                 file.close()
+
+        self.__speciate(report)
 
         return False
 
@@ -585,7 +596,6 @@ class Population(object):
 
             assert self.__popsize == len(new_population), 'Different population sizes!'
             # Updates current population
-
             self.__population = new_population[:]
 
             if checkpoint_interval is not None and time.time() > t0 + 60 * checkpoint_interval:
@@ -596,7 +606,7 @@ class Population(object):
 
 
 if __name__ == '__main__':
-
+    from visualize import plot_species
     print "Testing CoDeepNEAT population with excessive configuration parameters\n"
 
     # Necessary config values
@@ -632,27 +642,26 @@ if __name__ == '__main__':
             individual.fitness = 1.0
 
     # set fitness function
-    Population.evaluate = eval_fitness
+    CDN_Population.evaluate = eval_fitness
 
     # creates the population
-    b_pop = Population(10, 'blueprint')
-    m_pop = Population(15, 'module')
-    # runs the simulation for 250 epochs
-    # print "-- Start Blueprint Test --"
-    # #b_pop.epoch(100)
-    # print "-- End Blueprint Test --"
-    # print "-- Start Module Test --"
-    # #m_pop.epoch(100)
-    # print "-- End Module Test --"
-    # plot_species(b_pop.species_log, "blu_speciation")
-    # plot_species(m_pop.species_log, "mod_speciation")
-    # print(m_pop.species_log)
-    # m_pop._dump_species_log("mod_species.dat")
-    # x = np.load("mod_species.dat")
-    # print m_pop.species_log == x
+    b_pop = CDN_Population(10, Blu_Chromosome)
+    m_pop = CDN_Population(15, Mod_Chromosome)
+    #runs the simulation for 250 epochs
+    print "-- Start Blueprint Test --"
+    b_pop.epoch(100)
+    print "-- End Blueprint Test --"
+    print "-- Start Module Test --"
+    m_pop.epoch(100)
+    print "-- End Module Test --"
+    plot_species(b_pop.species_log, "blu_speciation")
+    plot_species(m_pop.species_log, "mod_speciation")
+    print(m_pop.species_log)
+    m_pop._dump_species_log("mod_species.dat")
+    x = np.load("mod_species.dat")
+    print m_pop.species_log == x
 
-    for i in range(21):
-        eval_fitness(b_pop)
-        eval_fitness(m_pop)
-        b_pop.step(False, 10, True, 'blu_best/')
-        m_pop.step(False, 10, True, 'mod_best/')
+    spec = [s for s in m_pop.species]
+    print [str(s) for s in spec]
+    for s in spec:
+        print [str(m) for m in s.members]

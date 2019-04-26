@@ -46,7 +46,7 @@ class Mod_Chromosome(FFChromosome):
             # Add a nother node "downstream for the only node"
             if self._node_gene_type == ConvModGene:
                 ng = self._node_gene_type(2, 'OUTPUT', Config.min_size,
-                                          'relu', Config.min_ksize, None, 'same', Config.min_drop,
+                                          'relu', Config.min_ksize, None, 'same', Config.start_drop,
                                           True, None)
             elif self._node_gene_type == ModNodeGene:
                 ng = self._node_gene_type(len(self._node_genes) + 1, 'OUTPUT',
@@ -57,13 +57,15 @@ class Mod_Chromosome(FFChromosome):
             return (ng, new_conn)
         else:
             # Choose a random connection to split
-            conn_to_split = random.choice(self._connection_genes.values())
-            #while not conn_to_split.enabled:
-            #    conn_to_split = random.choice(self._connection_genes.values())
-            # Add a new neuron that points to a random module species
+            possibilities = self._connection_genes.values()
+            conn_to_split = random.choice(possibilities)
+            while not conn_to_split.enabled:
+                possibilities.remove(conn_to_split)
+                conn_to_split = random.choice(possibilities)
+            # Add a new neuron
             if self._node_gene_type == ConvModGene:
                 ng = self._node_gene_type(len(self._node_genes) + 1, 'HIDDEN', Config.min_size,
-                                          'relu', Config.min_ksize, None, 'same', Config.min_drop,
+                                          'relu', Config.min_ksize, None, 'same', Config.start_drop,
                                           True, None)
             elif self._node_gene_type == ModNodeGene:
                 ng = self._node_gene_type(len(self._node_genes) + 1, 'HIDDEN',
@@ -100,9 +102,13 @@ class Mod_Chromosome(FFChromosome):
             chromo1 = other
             chromo2 = self
 
+        ngenes_1 = {ng.id: ng for ng in chromo1._node_genes}
+        ngenes_2 = {ng.id: ng for ng in chromo2._node_genes}
+
         matching = 0
         disjoint = 0
         excess = 0
+        nodeDiff = 0
 
         if len(chromo2._connection_genes.values()) > 0:
             max_cg_chromo2 = max(chromo2._connection_genes.values())
@@ -120,6 +126,11 @@ class Mod_Chromosome(FFChromosome):
             else:
                 # Homologous genes
                 matching += 1
+                ng1 = ngenes_1[cg1.innodeid]
+                ng2 = ngenes_2[cg2.innodeid]
+                nodeDiff += ng1.distnace(ng2)
+
+
 
         disjoint += len(chromo2._connection_genes) - matching
 
@@ -155,11 +166,11 @@ class Mod_Chromosome(FFChromosome):
         id = 1
         # Create an input node
         c._node_genes.append(ConvModGene(id, 'INPUT', Config.min_size, 'relu', Config.min_ksize, Config.min_stride,
-                                         'same', Config.min_drop, False, False))
+                                         'same', Config.start_drop, False, False))
         id += 1
         # Create output node
         # c._node_genes.append(ConvModGene(id, 'OUTPUT', Config.min_size, 'relu', Config.min_ksize, Config.min_stride,
-        #                                 'same', Config.min_drop, False, False))
+        #                                 'same', Config.start_drop, False, False))
         # id += 1
 
         # Connect the input to the output

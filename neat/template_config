@@ -1,10 +1,11 @@
 #--- parameters for the @TEMPLATE experiment ---#
 [phenotype]
-input_nodes         = 32,32,3
+input_nodes         = 28,28,1
 output_nodes        = 10
 hidden_nodes        = 1
 
 [blueprint]
+blupopsize				   = 15
 min_learnrate              = 0.0001
 max_learnrate              = 0.1
 learnrate_mutation_power   = 0.002
@@ -22,14 +23,16 @@ prob_addmodule			   = 0.05
 #prob_mutatehorizontalflips = 0.05
 
 [module]
+mod_species 		  = []
 modpopsize			  = 10
 min_size              = 32
 max_size              = 256
 size_mutation_power   = 3
 min_ksize             = 3
 max_ksize             = 5
-#min_stride            = 1
-#max_stride            = 2
+#min_stride           = 1
+#max_stride           = 2
+start_drop 			  = 0.2
 min_drop              = 0.0
 max_drop              = 0.7
 drop_mutation_power   = 0.05
@@ -44,25 +47,24 @@ prob_mutatemaxpool    = 0.05
 #prob_mutatebatchnorm  = 0.05
 
 [genetic]
-pop_size              = 150
+generations           = 1
 max_fitness_threshold = 0.9
-prob_addconn          = 0.03
-prob_addnode          = 0.01
 prob_togglelink       = 0.05
 elitism               = 0
 
 [genotype compatibility]
 compatibility_threshold = 5.5
 compatibility_change    = 0.0
-excess_coeficient       = 1.0
-disjoint_coeficient     = 1.0
+excess_coeficient       = 5.0
+disjoint_coeficient     = 5.0
 weight_coeficient       = 2.0
+module_coeficient       = 1.0
 
 [species]
 species_size        = 10
-survival_threshold  = 0.4
+survival_threshold  = 1
 old_threshold       = 80
 youth_threshold     = 10
 old_penalty         = 1.0
 youth_boost         = 1.0
-max_stagnation      = 15
+max_stagnation      = 1000000
