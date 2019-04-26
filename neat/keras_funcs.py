@@ -6,6 +6,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, Dropout, Flatten
 from keras.models import Model
 from keras.datasets import mnist
+from keras.utils import plot_model
 
 from config import Config, load
 from visualize import draw_module, draw_blu, drawAssembled
@@ -15,73 +16,65 @@ def makeKeras(blueprint, module_pop, visualize=False, bluFile="", modFile="", ne
     '''Assumes no skip connections in blueprint or modules'''
     # Start with defining the input layer
     main_input = Input(shape=Config.input_nodes, name='main_input')
-    if visualize:
-        drawblu = deepcopy(blueprint)
-        drawblu.cullDisabled()
-        draw_blu(drawblu, bluFile + "_" + str(blueprint.id))
-    modsUsed = []
+    x = main_input
 
-    nodes = blueprint.node_genes
+    drawblu = deepcopy(blueprint)
+    drawblu.cullDisabled()
+
+    modsUsed = []
+    modPointers = []
+
+    nodes = drawblu.node_genes
     blu_nodeDict = {ng.id: ng for ng in nodes}
-    conns = blueprint.conn_genes
+    conns = drawblu.conn_genes
     blu_connsDict = {cg.innodeid: cg for cg in conns if cg.enabled}
     mod_species = module_pop.species
     speciesDict = {s.id: s.members for s in mod_species}
 
-    blu_conn = blu_connsDict[1]
-    b_inID = blu_conn.outnodeid
-    while b_inID != 2:  # While not to the output node
-        blu_node = blu_nodeDict[b_inID]
-        module_C = random.choice(speciesDict[blu_node.modPointer])
-        if visualize:
-            drawmod = deepcopy(module_C)
-            modsUsed.append(drawmod)
-            drawmod.cullDisabled()
-            draw_module(drawmod, modFile + "_" + str(blu_node.modPointer) + "_" + str(module_C.id))
-        m_inID = 1
-        m_nodeDict = {mg.id: mg for mg in module_C.node_genes}
-        m_connDict = {cmg.innodeid: cmg for cmg in module_C.conn_genes}
-        mod = m_nodeDict[m_inID]
-        if len(module_C.node_genes) > 1:  # if there are connections
-            m_inID = m_connDict[m_inID].outnodeid
-        else:
-            m_inID = 2
-        x = Conv2D(mod.layersize, (mod.kernel_size, mod.kernel_size),
-                   strides=(1, 1), padding=mod.padding, activation=mod.activation_type)(main_input)
-        if mod.maxpool:
-            x = MaxPooling2D(pool_size=(2, 2), strides=1, padding='same')(x)
-        x = Dropout(mod.dropout)(x)
-        while m_inID != 2:
-            if len(module_C.node_genes) > 1:  # if there are connections
-                mod = m_nodeDict[m_inID]
-                m_inID = m_connDict[m_inID].outnodeid
-                x = Conv2D(mod.layersize, (mod.kernel_size, mod.kernel_size),
-                           strides=(1, 1), padding=mod.padding, activation=mod.activation_type)(x)
-                if mod.maxpool:
-                    x = MaxPooling2D(pool_size=(2, 2), strides=1, padding='same')(x)
-                x = Dropout(mod.dropout)(x)  # use 1-droprate b/c tensorflow is apprently using keep_prob instead
-            else:
-                m_inID = 2
+    bID = blu_connsDict[1].outnodeid
+    m = deepcopy(random.choice(speciesDict[blu_nodeDict[bID].modPointer]))
+    m.cullDisabled()
+    modsUsed.append(m)
+    modPointers.append(blu_nodeDict[bID].modPointer)
+    bID = blu_connsDict[bID].outnodeid
+    while bID != 2:
+        m = deepcopy(random.choice(speciesDict[blu_nodeDict[bID].modPointer]))
+        m.cullDisabled()
+        modsUsed.append(m)
+        modPointers.append(blu_nodeDict[bID].modPointer)
+        bID = blu_connsDict[bID].outnodeid
 
-        blu_conn = blu_connsDict[b_inID]
-        b_inID = blu_conn.outnodeid
+    for i, m_C in enumerate(modsUsed):
+        m_nodeDict = {mg.id: mg for mg in m_C.node_genes}
+        m_connDict = {cmg.innodeid: cmg for cmg in m_C.conn_genes}
 
-    if visualize:
-        drawBP = deepcopy(blueprint)
-        drawBP.cullDisabled()
-        drawMs = []
-        for m in modsUsed:
-            dm = deepcopy(m)
-            dm.cullDisabled()
-            drawMs.append(dm)
-        drawAssembled(drawBP, drawMs, netFile + '_blu:' + str(blueprint.id))
+        mID = 1
+        numLayers = len(m_nodeDict.values())
+        # Add layers if they exist
+        while numLayers > 0:
+            mod = m_nodeDict[mID]
+            if numLayers > 1:
+                mID = m_connDict[mID].outnodeid
+            x = Conv2D(mod.layersize, (mod.kernel_size, mod.kernel_size),
+                       strides=(1, 1), padding=mod.padding, activation=mod.activation_type)(x)
+            if mod.maxpool:
+                x = MaxPooling2D(pool_size=(2, 2), strides=1, padding='same')(x)
+            x = Dropout(mod.dropout)(x)
+            numLayers -= 1
 
-    # Also define the output layer
+    # Finish making the model
     x = Flatten()(x)
     main_output = Dense(Config.output_nodes, activation='softmax', name='main_output')(x)
-
     model = Model(inputs=main_input, outputs=main_output)
     model.compile(loss='categorical_crossentropy', optimizer='Adam', metrics=['accuracy'])
+
+    if visualize:
+        draw_blu(drawblu, bluFile + "_" + str(blueprint.id))
+        for i, m_C in enumerate(modsUsed):
+            draw_module(m_C, modFile + "_blu:" + str(blueprint.id) + "_spec:" + str(modPointers[i]) + "_id:" + str(m_C.id))
+        drawAssembled(drawblu, modsUsed, netFile + '_blu:' + str(blueprint.id))
+        plot_model(model, netFile + '_blu:' + str(blueprint.id) + "_keras.png")
+
     return model, modsUsed
 
 
@@ -91,63 +84,61 @@ def makeKerasMostFit(blueprint, modPop, visualize=False, bluFile="", modFile="",
 
 
 def makeKerasGivenMods(blueprint, mods, visualize=False, bluFile="", modFile="", netFile=""):
+    # Create the input layer
     main_input = Input(shape=Config.input_nodes, name='main_input')
-    if visualize:
-        drawblu = deepcopy(blueprint)
-        drawblu.cullDisabled()
-        draw_blu(drawblu, bluFile)
+    x = main_input
 
-    nodes = blueprint.node_genes
+    # Trim any extraneous connections from bluprint
+    drawblu = deepcopy(blueprint)
+    drawblu.cullDisabled()
+
+    # Get modPointers
+    modPointers = []
+    nodes = drawblu.node_genes
     blu_nodeDict = {ng.id: ng for ng in nodes}
-    conns = blueprint.conn_genes
+    conns = drawblu.conn_genes
     blu_connsDict = {cg.innodeid: cg for cg in conns if cg.enabled}
+    bID = blu_connsDict[1].outnodeid
+    modPointers.append(blu_nodeDict[bID].modPointer)
+    bID = blu_connsDict[bID].outnodeid
+    while bID != 2:
+        modPointers.append(blu_nodeDict[bID].modPointer)
+        bID = blu_connsDict[bID].outnodeid
 
-    blu_conn = blu_connsDict[1]
-    b_inID = blu_conn.outnodeid
-    for module_C in mods:
-        blu_node = blu_nodeDict[b_inID]
-        if visualize:
-            drawmod = deepcopy(module_C)
-            modsUsed.append(drawmod)
-            drawmod.cullDisabled()
-            draw_module(drawmod, modFile + "_" + str(blu_node.modPointer) + "_" + str(module_C.id))
-        m_inID = 1
-        m_nodeDict = {mg.id: mg for mg in module_C.node_genes}
-        m_connDict = {cmg.innodeid: cmg for cmg in module_C.conn_genes}
-        mod = m_nodeDict[m_inID]
-        if len(module_C.node_genes) > 1:  # if there are connections
-            m_inID = m_connDict[m_inID].outnodeid
-        else:
-            m_inID = 2
-        x = Conv2D(mod.layersize, (mod.kernel_size, mod.kernel_size),
-                   strides=(1, 1), padding=mod.padding, activation=mod.activation_type)(main_input)
-        if mod.maxpool:
-            x = MaxPooling2D(pool_size=(2, 2), strides=1, padding='same')(x)
-        x = Dropout(mod.dropout)(x)
-        while m_inID != 2:
-            if len(module_C.node_genes) > 1:  # if there are connections
-                mod = m_nodeDict[m_inID]
-                m_inID = m_connDict[m_inID].outnodeid
-                x = Conv2D(mod.layersize, (mod.kernel_size, mod.kernel_size),
-                           strides=(1, 1), padding=mod.padding, activation=mod.activation_type)(x)
-                if mod.maxpool:
-                    x = MaxPooling2D(pool_size=(2, 2), strides=1, padding='same')(x)
-                x = Dropout(mod.dropout)(x)  # use 1-droprate b/c tensorflow is apprently using keep_prob instead
-            else:
-                m_inID = 2
+    for i, m_C in enumerate(mods):
+        mC = deepcopy(m_C)
+        mC.cullDisabled()
+        m_nodeDict = {mg.id: mg for mg in mC.node_genes}
+        m_connDict = {cmg.innodeid: cmg for cmg in mC.conn_genes}
 
-        blu_conn = blu_connsDict[b_inID]
-        b_inID = blu_conn.outnodeid
+        mID = 1
+        numLayers = len(m_nodeDict.values())
+        # Add layers if they exist
+        while numLayers > 0:
+            # Trim connections just in case
+            mod = m_nodeDict[mID]
+            if numLayers > 1:
+                mID = m_connDict[mID].outnodeid
+            x = Conv2D(mod.layersize, (mod.kernel_size, mod.kernel_size),
+                       strides=(1, 1), padding=mod.padding, activation=mod.activation_type)(x)
+            if mod.maxpool:
+                x = MaxPooling2D(pool_size=(2, 2), strides=1, padding='same')(x)
+            x = Dropout(mod.dropout)(x)
+            numLayers -= 1
 
-    #if visualize:
-    #    drawAssembled(blueprint, modsUsed, netFile)
-
-    # Also define the output layer
+    # Finish making the model
     x = Flatten()(x)
     main_output = Dense(Config.output_nodes, activation='softmax', name='main_output')(x)
-
     model = Model(inputs=main_input, outputs=main_output)
     model.compile(loss='categorical_crossentropy', optimizer='Adam', metrics=['accuracy'])
+
+    if visualize:
+        draw_blu(drawblu, bluFile + "_" + str(blueprint.id))
+        for i, m_C in enumerate(mods):
+            draw_module(m_C, modFile + "_blu:" + str(blueprint.id) + "_spec:" + str(modPointers[i]) + "_id:" + str(m_C.id))
+        drawAssembled(drawblu, mods, netFile + '_blu:' + str(blueprint.id))
+        plot_model(model, netFile + '_blu:' + str(blueprint.id) + "_keras.png")
+
     return model
 
 
@@ -220,17 +211,18 @@ def runMNIST(model, trainData, num_samples, valData, datagen, epochs=10, batchSi
 
 
 if __name__ == '__main__':
+    import os
     from cdn_population import CDN_Population as pop
     from blu_chromosome import Blu_Chromosome
     from mod_chromosome import Mod_Chromosome
 
     print "Testing keras_functions with generous configuration parameters"
 
-    load('template_config')
+    load('mnist_config')
     Config.input_nodes = [int(28), int(28), int(1)]
     Config.output_nodes = 10
     Config.max_fitness_threshold = 2
-    Config.prob_addmodule = 0.0
+    Config.prob_addmodule = 1.0
     Config.prob_addconn = 0.03
     Config.min_learnrate = 0.001
     Config.max_learnrate = 0.1
@@ -262,16 +254,19 @@ if __name__ == '__main__':
     b_pop = pop(Config.blupopsize, Blu_Chromosome)
     m_pop = pop(Config.modpopsize, Mod_Chromosome)
 
-    for i in range(21):
+    for i in range(11):
         m_pop.evaluate()
         b_pop.evaluate()
-        m_pop.step(False)
-        b_pop.step(False)
+        m_pop.step(True)
+        b_pop.step(True)
 
     bp = b_pop.population[0]
 
-    model, _ = makeKeras(bp, m_pop, True, "pics/makeKeras_blu", "pics/makeKeras_mod", "pics/assembledNet")
-    x_train, y_train, num_samples, x_test, y_test, datagen = setupMNIST(True)
-    loss, accuracy = runMNIST(model, (x_train, y_train), num_samples, (x_test, y_test), datagen, 2)
+    if not os.path.exists(os.path.join(os.getcwd(), "pics/")):
+        os.mkdir(os.path.join(os.getcwd(), "pics/"))
+    model, mUsed = makeKeras(bp, m_pop, True, "pics/makeKeras_blu", "pics/makeKeras_mod", "pics/makeKerasNet")
+    model2 = makeKerasGivenMods(bp, mUsed, True, "pics/makeKerasGM_blu", "pics/makeKerasGM_mod", "pics/makeKerasGM_Net")
+    #x_train, y_train, num_samples, x_test, y_test, datagen = setupMNIST(True)
+    #loss, accuracy = runMNIST(model, (x_train, y_train), num_samples, (x_test, y_test), datagen, 2)
 
-    print "loss: %f\tacc: %f"%(loss, accuracy)
+    #print "loss: %f\tacc: %f"%(loss, accuracy)

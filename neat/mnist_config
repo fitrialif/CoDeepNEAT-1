@@ -10,7 +10,7 @@ max_learnrate              = 0.1
 learnrate_mutation_power   = 0.002
 prob_mutatemodpointer      = 0.1
 prob_mutatelearnrate       = 0.0
-prob_addmodule			   = 0.03
+prob_addmodule			   = 0.3
 
 
 [module]
@@ -26,7 +26,7 @@ start_drop 			  = 0.2
 min_drop              = 0.0
 max_drop              = 0.7
 drop_mutation_power   = 0.0175
-prob_addlayer		  = 0.001
+prob_addlayer		  = 0.1
 prob_mutatelayersize  = 0.9
 prob_mutatekernel     = 0.05
 prob_mutatepadding    = 0.01
@@ -35,15 +35,15 @@ prob_mutatemaxpool    = 0.01
 
 [genetic]
 max_fitness_threshold = 0.99
-generations			  = 200
+generations			  = 20
 elitism 			  = 1
 
 [genotype compatibility]
-compatibility_threshold = 5.5
+compatibility_threshold = 1.0
 compatibility_change    = 0.0
 excess_coeficient       = 5.0
 disjoint_coeficient     = 5.0
-module_coeficient       = 0.5
+module_coeficient       = 2.0
 
 [species]
 species_size        = 10

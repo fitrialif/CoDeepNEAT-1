@@ -10,7 +10,7 @@ from config import Config, load
 from blu_chromosome import Blu_Chromosome
 from mod_chromosome import Mod_Chromosome
 from cdn_population import CDN_Population as pop
-from visualize import drawAssembled
+from visualize import drawAssembled, draw_blu, draw_module
 
 
 def evaluate(bpop, mpop, trainData, num_samples, testData, datagen, epochs=10, numAssemble=25, batchSize=32,
@@ -29,10 +29,11 @@ def evaluate(bpop, mpop, trainData, num_samples, testData, datagen, epochs=10, n
     bpDict = {bp.id: [bp, 0] for bp in bpop.population}
     modDict = {mod.id: [mod, 0] for mod in mpop.population}
 
+    # Give each individual some fitness to avoid stagnation
     for indiv in bpop:
-        indiv.fitness = 0.0
+        indiv.fitness = 0.001
     for indiv in mpop:
-        indiv.fitness = 0.0
+        indiv.fitness = 0.1
 
     losses = []
     accs = []
@@ -129,6 +130,7 @@ if __name__ == '__main__':
     eliteBP = b_pop.population[0]
     eliteMods = []
     bestAcc = 0.0
+    bestGen = 0
 
     stepVerbosity = True
 
@@ -146,7 +148,7 @@ if __name__ == '__main__':
 
         # Evaluate assembled networks
         bBP, bM, aveLoss, aveAcc, bAcc, bLoss = evaluate(b_pop, m_pop, (x_train, y_train), num_samples, (x_test, y_test), datagen,
-                                                         epochs=8, numAssemble=25,
+                                                         epochs=8, numAssemble=15,
                                                          bluPic=bPic, modPic=mPic, netPic=nPic)
         # Add to record lists
         bestBPs.append(bBP)
@@ -158,17 +160,27 @@ if __name__ == '__main__':
 
         # Update elite found so far
         if bAcc > bestAcc:
-            eliteBP = bBP
-            eliteMods = bM
-            bestAcc = bAcc
+            print "New best network"
+            print "Blueprint %s" %(bBP)
+            eliteBP = deepcopy(bBP)
+            print "Elite mods"
+            for m in bM:
+                print "%s"%str(m)
+            eliteMods = []
+            for m in bM:
+                eliteMods.append(deepcopy(m))
+            bestAcc = deepcopy(bAcc)
+            bestGen = deepcopy(g)
+            print "Best acc: %f" % bestAcc
+        print "Best accuracy so far as of gen %d is %f found gen:%d" %(g, bestAcc, bestGen)
 
         # Evolve the populations
         if stepVerbosity:
             print "Module Step"
-        endModEvol = m_pop.step(stepVerbosity, 10, False, checkDir)
+        endModEvol = m_pop.step(True, 10, False, checkDir)
         if stepVerbosity:
             print "Blueprint Step"
-        endEvolBP = b_pop.step(stepVerbosity, 10, False, checkDir)
+        endEvolBP = b_pop.step(True, 10, False, checkDir)
         if endModEvol or endEvolBP:
             break
         sys.stdout.flush()
@@ -182,11 +194,21 @@ if __name__ == '__main__':
         dm = deepcopy(m)
         dm.cullDisabled()
         drawMs.append(dm)
+    draw_blu(drawBP, elitePic + "_bluprint")
+    for i,m in enumerate(drawMs):
+        draw_module(m, elitePic + "_" + str(i) + "_mod:" + str(m.id))
     drawAssembled(drawBP, drawMs, elitePic)
 
     # Find the fitness of the best blueprint
     print "----Evolution Ended: Finding fitness of elite model----"
-    eliteModel = makeKerasGivenMods(eliteBP, eliteMods, False)
+    print "-Elite model:-"
+    print "Blueprint"
+    print str(eliteBP)
+    print "Modules:"
+    for m in eliteMods:
+        print str(m)
+    print "-End Elite model-"
+    eliteModel = makeKerasGivenMods(eliteBP, eliteMods, True, )
     eliteLoss, eliteAcc = runMNIST(eliteModel, (x_train, y_train), num_samples, (x_test, y_test), datagen,
                                    epochs=100, verbosity=2)
     print "Elite Model loss:%f accuracy:%f" % (eliteLoss, eliteAcc)

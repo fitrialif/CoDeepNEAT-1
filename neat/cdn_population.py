@@ -214,7 +214,7 @@ class CDN_Population(object):
             if total_average > 0:
                 s.spawn_amount = int(round((species_stats[i] * self.__popsize / total_average)))
             else:
-                s.spawn_amount = int(round((species_stats[i] * self.__popsize)))
+                s.spawn_amount = int(round((species_stats[i] * self.__popsize))) + 1
 
     def __tournament_selection(self, k=2):
         """ Tournament selection with size k (default k=2).
@@ -285,7 +285,7 @@ class CDN_Population(object):
                 s.hasBest = True
 
         # Stops the simulation
-        if best.fitness > Config.max_fitness_threshold:
+        if best.fitness > Config.max_fitness_threshold and self._gtype != Mod_Chromosome:
             print '\nBest individual found in epoch %s - complexity: %s' %(self.__generation, best.size())
             if save_best:
                 file = open(save_dir + 'best_chromo_' + str(self.__generation), 'w')
@@ -345,7 +345,7 @@ class CDN_Population(object):
                 self.__species.remove(s)
 
         if len(self.__species) < 1:
-            print "Ending on epoch %d, no species left"%(self.__generation)
+            print "Ending on generation %d, no species left"%(self.__generation)
             return True
         # Logging speciation stats
         self.__log_species()
@@ -372,6 +372,8 @@ class CDN_Population(object):
 
         # Spawning new population
         for s in self.__species:
+            if report:
+                print "   species %d producting %d new individuals" % (s.id, s.spawn_amount)
             new_population.extend(s.reproduce())
 
         # ----------------------------#

@@ -130,13 +130,12 @@ class Mod_Chromosome(FFChromosome):
                 ng2 = ngenes_2[cg2.innodeid]
                 nodeDiff += ng1.distnace(ng2)
 
-
-
         disjoint += len(chromo2._connection_genes) - matching
 
         # assert(matching > 0) # this can't happen
         distance = Config.excess_coeficient * excess + \
-                   Config.disjoint_coeficient * disjoint
+                   Config.disjoint_coeficient * disjoint + \
+                   Config.module_coeficient * nodeDiff
 
         return distance
 
