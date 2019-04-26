@@ -179,7 +179,7 @@ def drawAssembled(blueprint, modList, outfile='neuralnet'):
                         output += str(nodeId) + ' [style=filled, shape=box, fillcolor=lightcoral, label=\"maxpool\"]\n'
                         nodeId += 1
 
-    output += str(nodeId) + ' [style=filled, shape=circle, fillcolor=gray label=flatten]\n'
+    output += str(nodeId) + ' [style=filled, shape=ellipse, fillcolor=gray label=flatten]\n'
 
     # subgraph for inputs and outputs
     output += '\n  subgraph cluster_inputs { \n  node [style=filled, shape=box, fillcolor=white] \n color=white \n'
