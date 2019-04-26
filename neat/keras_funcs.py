@@ -18,7 +18,7 @@ def makeKeras(blueprint, module_pop, visualize=False, bluFile="", modFile="", ne
     if visualize:
         drawblu = deepcopy(blueprint)
         drawblu.cullDisabled()
-        draw_blu(drawblu, bluFile)
+        draw_blu(drawblu, bluFile + "_" + str(blueprint.id))
     modsUsed = []
 
     nodes = blueprint.node_genes
@@ -67,7 +67,14 @@ def makeKeras(blueprint, module_pop, visualize=False, bluFile="", modFile="", ne
         b_inID = blu_conn.outnodeid
 
     if visualize:
-        drawAssembled(blueprint, modsUsed, netFile)
+        drawBP = deepcopy(blueprint)
+        drawBP.cullDisabled()
+        drawMs = []
+        for m in modsUsed:
+            dm = deepcopy(m)
+            dm.cullDisabled()
+            drawMs.append(dm)
+        drawAssembled(drawBP, drawMs, netFile + '_blu:' + str(blueprint.id))
 
     # Also define the output layer
     x = Flatten()(x)

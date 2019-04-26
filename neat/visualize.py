@@ -161,6 +161,7 @@ def draw_module(chromosome, outfile):
 
 
 def drawAssembled(blueprint, modList, outfile='neuralnet'):
+    
     output = "digraph G {\n node [shape=rectangle, fontsize=9, height=0.2, width=0.2]\n"
 
     nodeId = 3
