@@ -196,8 +196,6 @@ def drawAssembled(blueprint, modList, outfile='neuralnet'):
     output += '\n ' + str(nodeId) + ' -> ' + str(2)
     output += '\n }'
 
-    print output
-
     if has_pydot:
         g = pydot.graph_from_dot_data(output)
         g[0].write(outfile + '.svg', prog='dot', format='svg')
