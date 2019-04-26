@@ -166,7 +166,7 @@ class Mod_Chromosome(FFChromosome):
         id = 1
         # Create an input node
         c._node_genes.append(ConvModGene(id, 'INPUT', Config.min_size, 'relu', Config.min_ksize, Config.min_stride,
-                                         'same', Config.start_drop, False, False))
+                                         'same', Config.start_drop, True, False))
         id += 1
         # Create output node
         # c._node_genes.append(ConvModGene(id, 'OUTPUT', Config.min_size, 'relu', Config.min_ksize, Config.min_stride,

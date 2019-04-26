@@ -177,15 +177,18 @@ def drawAssembled(blueprint, modList, outfile='neuralnet'):
                     nodeId += 1
                     if ng.maxpool:
                         output += str(nodeId) + ' [style=filled, shape=box, fillcolor=lightcoral, label=\"maxpool\"]\n'
+                        nodeId += 1
+
+    output += str(nodeId) + ' [style=filled, shape=circle, fillcolor=gray label=flatten]\n'
 
     # subgraph for inputs and outputs
-    output += '\n  subgraph cluster_inputs { \n  node [style=filled, shape=box fillcolor=white] \n color=white \n'
+    output += '\n  subgraph cluster_inputs { \n  node [style=filled, shape=box, fillcolor=white] \n color=white \n'
     for ng in blueprint.node_genes:
         if ng.type == 'INPUT':
             output += str(ng.id) + ' [label=\"INPUT\"]'
     output += '\n  }'
 
-    output += '\n  subgraph cluster_outputs { \n    node [style=filled, color=lightgray] \n color=white \n'
+    output += '\n  subgraph cluster_outputs { \n    node [style=filled, shape=circle, color=lightgray] \n color=white \n'
     for ng in blueprint.node_genes:
         if ng.type == 'OUTPUT':
             output += str(ng.id) + ' [label=\"OUTPUT\"]'

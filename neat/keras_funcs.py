@@ -212,7 +212,9 @@ def runMNIST(model, trainData, num_samples, valData, datagen, epochs=10, batchSi
                         verbose=verbosity,
                         workers=4)
 
-    (loss, accuracy) = model.evaluate(valData[0], valData[1])
+    verb = 0 if verbosity == 0 else 1
+
+    (loss, accuracy) = model.evaluate(valData[0], valData[1], verbose=verb)
 
     return loss, accuracy
 
