@@ -83,19 +83,24 @@ def draw_ff(chromosome, outfile):
 def draw_blu(chromosome, outfile):
     ''' Draws a blueprint '''
 
-    output = 'digraph G {\n  node [shape=circle, fontsize=9, height=0.2, width=0.2]'
+    output = 'digraph G {\n  node [shape=circle, fontsize=9, height=0.2, width=0.2]\n'
+    for ng in chromosome.node_genes:
+        if ng.id == 1 or ng.id == 2:
+            pass
+        else:
+            output += str(ng.id) + ' [label=\"' + str(ng.id) + ", " + str(ng.modPointer) + '\"]\n'
 
     # subgraph for inputs and outputs
-    output += '\n  subgraph cluster_inputs { \n  node [style=filled, shape=box] \n    color=white'
+    output += '\n  subgraph cluster_inputs { \n  node [style=filled, shape=box fillcolor=white] \n color=white \n'
     for ng in chromosome.node_genes:
         if ng.type == 'INPUT':
-            output += '\n    ' + str(ng.id)
+            output += str(ng.id) + ' [label=\"' + str(ng.id) + '\"]'
     output += '\n  }'
 
-    output += '\n  subgraph cluster_outputs { \n    node [style=filled, color=lightblue] \n    color=white'
+    output += '\n  subgraph cluster_outputs { \n    node [style=filled, color=lightgray] \n color=white \n'
     for ng in chromosome.node_genes:
         if ng.type == 'OUTPUT':
-            output += '\n    ' + str(ng.id)
+            output += str(ng.id) + ' [label=\"' + str(ng.id) + '\"]'
     output += '\n  }'
     # topology
     for cg in chromosome.conn_genes:
@@ -116,21 +121,29 @@ def draw_module(chromosome, outfile):
     ''' Draws a module '''
 
     if chromosome.node_gene_type == ConvModGene:
-        output = 'digraph G {\n  node [shape=rectangle, fontsize=9, height=0.2, width=0.2]'
+        output = 'digraph G {\n  node [shape=rectangle, fontsize=9, height=0.2, width=0.2]\n'
     elif chromosome.node_gene_type == ModNodeGene:
-        output = 'digraph G {\n  node [shape=circle, fontsize=9, height=0.2, width=0.2]'
+        output = 'digraph G {\n  node [shape=circle, fontsize=9, height=0.2, width=0.2]\n'
 
-    # subgraph for inputs and outputs
-    output += '\n  subgraph cluster_inputs { \n  node [style=filled, shape=box] \n    color=white'
+    for ng in chromosome.node_genes:
+        if ng.id == 1 or ng.id == 2:
+            pass
+        else:
+            output += str(ng.id) + ' [label=\"id:' + str(ng.id) + ", numfilts:" + str(ng.layersize) + ", ksize:" + str(ng.kernel_size) + ",\n"\
+                   "act:"+ str(ng._activation_type) + ", drop_prob:" + str(round(ng.dropout,5)) + ', maxpool:'  + str(ng.maxpool) + '\"]\n'
+   # subgraph for inputs and outputs
+    output += '\n  subgraph cluster_inputs { \n  node [style=filled, shape=box fillcolor=white] \n color=white \n'
     for ng in chromosome.node_genes:
         if ng.type == 'INPUT':
-            output += '\n    ' + str(ng.id)
+            output += str(ng.id) + ' [label=\"id:' + str(ng.id) + ", numfilts:" + str(ng.layersize) + ", ksize:" + str(ng.kernel_size) + ",\n"\
+                   "act:"+ str(ng._activation_type) + ", drop_prob:" + str(round(ng.dropout,5)) + ', maxpool:'  + str(ng.maxpool) + '\"]\n'
     output += '\n  }'
 
-    output += '\n  subgraph cluster_outputs { \n    node [style=filled, color=lightblue] \n    color=white'
+    output += '\n  subgraph cluster_outputs { \n    node [style=filled, color=lightgray] \n color=white \n'
     for ng in chromosome.node_genes:
         if ng.type == 'OUTPUT':
-            output += '\n    ' + str(ng.id)
+            output += str(ng.id) + ' [label=\"id:' + str(ng.id) + ", numfilts:" + str(ng.layersize) + ", ksize:" + str(ng.kernel_size) + ",\n"\
+                   "act:"+ str(ng._activation_type) + ", drop_prob:" + str(round(ng.dropout, 5)) + ', maxpool:'  + str(ng.maxpool) + '\"]\n'
     output += '\n  }'
     # topology
     for cg in chromosome.conn_genes:
@@ -139,6 +152,51 @@ def draw_module(chromosome, outfile):
             output += ' [style=dotted, color=cornflowerblue]'
 
     output += '\n }'
+
+    if has_pydot:
+        g = pydot.graph_from_dot_data(output)
+        g[0].write(outfile + '.svg', prog='dot', format='svg')
+    else:
+        print 'You do not have the PyDot package.'
+
+
+def drawAssembled(blueprint, modList, outfile='neuralnet'):
+    output = "digraph G {\n node [shape=rectangle, fontsize=9, height=0.2, width=0.2]\n"
+
+    nodeId = 3
+    for bng in blueprint.node_genes:
+        if bng.id == 1 or bng.id == 2:
+            pass
+        else:
+            for mod in modList:
+                for ng in mod.node_genes:
+                    output += str(nodeId) + ' [style=filled, shape=box, fillcolor=white, label=\"id:' + str(ng.id) + ", numfilts:" + str(ng.layersize) + ", ksize:" + str(ng.kernel_size) + 'act:' + ng._activation_type + '\"]\n'
+                    nodeId += 1
+                    output += str(nodeId) + ' [style=filled, shape=box, fillcolor=lightblue, label=\"drop_prob:' + str(round(ng.dropout, 5)) + '\"]\n'
+                    nodeId += 1
+                    if ng.maxpool:
+                        output += str(nodeId) + ' [style=filled, shape=box, fillcolor=lightcoral, label=\"maxpool\"]\n'
+
+    # subgraph for inputs and outputs
+    output += '\n  subgraph cluster_inputs { \n  node [style=filled, shape=box fillcolor=white] \n color=white \n'
+    for ng in blueprint.node_genes:
+        if ng.type == 'INPUT':
+            output += str(ng.id) + ' [label=\"INPUT\"]'
+    output += '\n  }'
+
+    output += '\n  subgraph cluster_outputs { \n    node [style=filled, color=lightgray] \n color=white \n'
+    for ng in blueprint.node_genes:
+        if ng.type == 'OUTPUT':
+            output += str(ng.id) + ' [label=\"OUTPUT\"]'
+    output += '\n  }'
+
+    output += '\n ' + str(1) + ' -> ' + str(3)
+    for i in range(3, nodeId):
+        output += '\n ' + str(i) + ' -> ' + str(i + 1)
+    output += '\n ' + str(nodeId) + ' -> ' + str(2)
+    output += '\n }'
+
+    print output
 
     if has_pydot:
         g = pydot.graph_from_dot_data(output)
