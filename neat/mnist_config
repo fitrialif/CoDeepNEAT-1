@@ -1,0 +1,55 @@
+#--- parameters for the MNIST experiment ---#
+[phenotype]
+input_nodes         = 28,28,1
+output_nodes        = 10
+
+[blueprint]
+blupopsize				   = 15
+min_learnrate              = 0.0001
+max_learnrate              = 0.1
+learnrate_mutation_power   = 0.002
+prob_mutatemodpointer      = 0.1
+prob_mutatelearnrate       = 0.0
+prob_addmodule			   = 0.03
+
+
+[module]
+modpopsize			  = 10
+min_size              = 16
+max_size              = 256
+size_mutation_power   = 16
+min_ksize             = 3
+max_ksize             = 5
+#min_stride           = 1
+#max_stride           = 2
+start_drop 			  = 0.2
+min_drop              = 0.0
+max_drop              = 0.7
+drop_mutation_power   = 0.0175
+prob_addlayer		  = 0.001
+prob_mutatelayersize  = 0.9
+prob_mutatekernel     = 0.05
+prob_mutatepadding    = 0.01
+prob_mutatedrop       = 0.5
+prob_mutatemaxpool    = 0.01
+
+[genetic]
+max_fitness_threshold = 0.99
+generations			  = 200
+elitism 			  = 1
+
+[genotype compatibility]
+compatibility_threshold = 5.5
+compatibility_change    = 0.0
+excess_coeficient       = 5.0
+disjoint_coeficient     = 5.0
+module_coeficient       = 0.5
+
+[species]
+species_size        = 10
+survival_threshold  = 0.3
+old_threshold       = 30
+youth_threshold     = 10
+old_penalty         = 1.0
+youth_boost         = 1.0
+max_stagnation      = 100
