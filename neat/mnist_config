@@ -35,7 +35,7 @@ prob_mutatemaxpool    = 0.01
 
 [genetic]
 max_fitness_threshold = 0.99
-generations			  = 20
+generations			  = 10
 elitism 			  = 1
 
 [genotype compatibility]

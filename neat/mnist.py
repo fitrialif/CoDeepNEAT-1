@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
         # Evaluate assembled networks
         bBP, bM, aveLoss, aveAcc, bAcc, bLoss = evaluate(b_pop, m_pop, (x_train, y_train), num_samples, (x_test, y_test), datagen,
-                                                         epochs=8, numAssemble=15,
+                                                         epochs=6, numAssemble=10,
                                                          bluPic=bPic, modPic=mPic, netPic=nPic)
         # Add to record lists
         bestBPs.append(bBP)
