@@ -1,0 +1,94 @@
+Bootstrap:docker
+From:ubuntu:16.04
+
+%help
+Singularity 2.5.2 container to run on the High Performance Cluster at UWyo.
+For CoDeepNEAT Senior Design Project by Geo. Dylan Dickerson Spring 2019.
+
+To compile use 'sudo singularity build NAME.simg codeep_t.singularity'
+
+%setup
+
+%files
+	# Having to copy the 390.30 driver from host to container
+	/gscratch/gdicker1/CoDeepNEAT/nvidia-diag-driver-local-repo-ubuntu1604-390.30_1.0-1_amd64.deb /tmp/nvidia-diag-driver-local-repo-ubuntu1604-390.30_1.0-1_amd64.deb
+
+%post
+	# Prep the container
+	apt-get update && apt-get -y dist-upgrade
+	apt-get install -y build-essential tar unzip wget cmake git zip linux-headers-$(uname -r) \
+	graphviz libplot-dev plotutils python2.7 python-pip
+
+	whereis pip
+
+	# Get cuda required packages	
+	wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_9.0.176-1_amd64.deb
+	wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64/libcudnn7_7.0.5.15-1+cuda9.0_amd64.deb
+	wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64/libcudnn7-dev_7.0.5.15-1+cuda9.0_amd64.deb
+	wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64/libnccl2_2.1.4-1+cuda9.0_amd64.deb
+	wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64/libnccl-dev_2.1.4-1+cuda9.0_amd64.deb
+	# install them
+	apt-get install -y /tmp/nvidia-diag-driver-local-repo-ubuntu1604-390.30_1.0-1_amd64.deb
+	apt-key add /var/nvidia-diag-driver-local-repo-390.30/7fa2af80.pub
+	dpkg -i cuda-repo-ubuntu1604_9.0.176-1_amd64.deb
+	dpkg -i libcudnn7_7.0.5.15-1+cuda9.0_amd64.deb
+	dpkg -i libcudnn7-dev_7.0.5.15-1+cuda9.0_amd64.deb
+	dpkg -i libnccl2_2.1.4-1+cuda9.0_amd64.deb
+	dpkg -i libnccl-dev_2.1.4-1+cuda9.0_amd64.deb
+	apt-get update
+	apt-get install -y cuda=9.0.176-1
+	apt-get install -y libcudnn7-dev
+	apt-get install -y libnccl-dev
+
+	apt-get update && apt-get -y dist-upgrade
+
+	# Install dependencies, tensorflow, and keras
+	PIPLOC=$(which pip)
+	$(which python) --version
+	$PIPLOC install --upgrade keras
+	$PIPLOC install --upgrade tensorflow-gpu==1.12.0
+
+	# Install Biggles & PyDot (for visialize.py in neat)
+	$PIPLOC install biggles
+	$PIPLOC install pydot
+
+	# Make sure libcuda.so.1 can be found
+	#cp /usr/local/cuda-10.0/compat/libcuda.so.1 /usr/local/cuda/lib
+
+
+	# Import databases (MNIST and CIFAR-10)
+	python -c "from keras.datasets import mnist; mnist.load_data()"
+	python -c "from keras.datasets import cifar10; cifar10.load_data()"
+	
+	# Remove unneeded files
+	rm /tmp/nvidia-diag-driver-local-repo-ubuntu1604-390.30_1.0-1_amd64.deb cuda-repo-ubuntu1604_9.0.176-1_amd64.deb libcudnn7_7.0.5.15-1+cuda9.0_amd64.deb libcudnn7-dev_7.0.5.15-1+cuda9.0_amd64.deb libnccl2_2.1.4-1+cuda9.0_amd64.deb libnccl-dev_2.1.4-1+cuda9.0_amd64.deb
+
+	# Make sure files are updated correctly
+	apt-get -y update && apt-get -y dist-upgrade
+
+	# Make needed directories for binding on HPC
+	mkdir -p /project /gscratch/gdicker1/CoDeepNEAT /lscratch
+
+%test
+	PIPLOC=$(which pip)
+	# make sure python is installed
+	whereis python
+	python --version # should be 2.7
+	$PIPLOC list
+	# Check tensorflow & keras version
+	$PIPLOC show tensorflow-gpu | grep Version # should be 1.13.1
+	$PIPLOC show keras | grep Version # should be 2.2.4
+
+	# Check that data sets are installed
+	python -c "from keras.datasets import mnist; mnist.load_data()" # Should be "Using Tensorflow backend"
+	python -c "from keras.datasets import cifar10; cifar10.load_data()" # Should be "Using Tensorflow backend"
+
+	# Uncomment to peek at the root directory
+	# ls -l /P
+
+%environment
+	export PATH=/usr/local/cuda-9.0/bin${PATH:+:${PATH}}
+	export LD_LIBRARY_PATH=/usr/local/cuda-9.0/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+
+
+%runscript
