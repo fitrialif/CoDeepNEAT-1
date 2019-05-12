@@ -5,7 +5,7 @@ import keras
 from keras.preprocessing.image import ImageDataGenerator
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, Dropout, Flatten
 from keras.models import Model
-from keras.datasets import mnist
+from keras.datasets import mnist, cifar10
 from keras.utils import plot_model
 
 from config import Config, load
@@ -197,7 +197,7 @@ def setupMNIST(verbose=False):
 def runMNIST(model, trainData, num_samples, valData, datagen, epochs=10, batchSize=32, verbosity=0):
     spe = ceil(num_samples / batchSize)
     model.fit_generator(datagen.flow(trainData[0], trainData[1], batchSize),
-                        steps_per_epoch=ceil(num_samples / batchSize),
+                        steps_per_epoch=spe,
                         epochs=epochs,
                         validation_data=(valData[0], valData[1]),
                         verbose=verbosity,
@@ -209,6 +209,73 @@ def runMNIST(model, trainData, num_samples, valData, datagen, epochs=10, batchSi
 
     return loss, accuracy
 
+
+def setupCIFAR(verbose=False):
+    num_classes = Config.output_nodes
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    if verbose:
+        print('x_train shape:', x_train.shape)
+        print(x_train.shape[0], 'train samples')
+        print(x_test.shape[0], 'test samples')
+
+    # Convert class vectors to binary class matrices.
+    y_train = keras.utils.to_categorical(y_train, num_classes)
+    y_test = keras.utils.to_categorical(y_test, num_classes)
+    # Put the inputs into a more usable range
+    x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)  # use channels last convention
+    x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
+
+    # Setup a data generator
+    datagen = ImageDataGenerator(
+        featurewise_center=True,  # set input mean to 0 over the dataset
+        samplewise_center=False,  # set each sample mean to 0
+        featurewise_std_normalization=True,  # divide inputs by std of the dataset
+        samplewise_std_normalization=False,  # divide each input by its std
+        zca_whitening=False,  # apply ZCA whitening
+        zca_epsilon=1e-06,  # epsilon for ZCA whitening
+        rotation_range=0,  # randomly rotate images in the range (degrees, 0 to 180)
+        # randomly shift images horizontally (fraction of total width)
+        width_shift_range=0.1,
+        # randomly shift images vertically (fraction of total height)
+        height_shift_range=0.1,
+        shear_range=0.,  # set range for random shear
+        zoom_range=0.,  # set range for random zoom
+        channel_shift_range=0.,  # set range for random channel shifts
+        # set mode for filling points outside the input boundaries
+        fill_mode='nearest',
+        cval=0.,  # value used for fill_mode = "constant"
+        horizontal_flip=True,  # randomly flip images
+        vertical_flip=False,  # randomly flip images
+        # set rescaling factor (applied before any other transformation)
+        rescale=None,
+        # set function that will be applied on each input
+        preprocessing_function=None,
+        # image data format, either "channels_first" or "channels_last"
+        data_format=None,
+        # fraction of images reserved for validation (strictly between 0 and 1)
+        validation_split=0.0)
+
+    datagen.fit(x_train)
+
+    return x_train, y_train, x_train.shape[0], x_test, y_test, datagen
+
+
+def runCIFAR(model, trainData, num_samples, valData, datagen, epochs=10, batchSize=32, verbosity=0):
+    spe = ceil(num_samples / batchSize)
+    model.fit_generator(datagen.flow(trainData[0], trainData[1], batchSize),
+                        steps_per_epoch=spe,
+                        epochs=epochs,
+                        validation_data=(valData[0], valData[1]),
+                        verbose=verbosity,
+                        workers=4)
+
+    verb = 0 if verbosity == 0 else 1
+
+    (loss, accuracy) = model.evaluate(valData[0], valData[1], verbose=verb)
+
+    return loss, accuracy
 
 if __name__ == '__main__':
     import os
