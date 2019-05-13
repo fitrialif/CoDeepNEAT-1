@@ -1,6 +1,6 @@
 #--- parameters for the MNIST experiment ---#
 [phenotype]
-input_nodes         = 28,28,1
+input_nodes         = 32, 32, 3
 output_nodes        = 10
 
 [blueprint]
