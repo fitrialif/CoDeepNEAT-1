@@ -52,7 +52,7 @@ def evaluate(bpop, mpop, trainData, num_samples, testData, datagen, epochs=10, n
         else:
             # Don't create pictures
             model, modsUsed = makeKeras(bp, mpop, False)
-        loss, acc = runMNIST(model, trainingData, 42500, valData, datagen, epochs, verbosity=0)
+        loss, acc = runCIFAR(model, trainingData, 42500, valData, datagen, epochs, verbosity=0)
         losses.append(loss)
         accs.append(acc)
         if acc > max_acc:
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     # Load the configuration file
     load('cifar_config')
     # Download the mnist dataset and setup a datagen object
-    x_train, y_train, num_samples, x_test, y_test, datagen = setupMNIST(False)
+    x_train, y_train, num_samples, x_test, y_test, datagen = setupCIFAR(False)
 
     checkDir = os.path.join(os.getcwd(), "cifar10/checkpoints/")
     statDir = os.path.join(os.getcwd(), "cifar10/stats/")
@@ -209,7 +209,7 @@ if __name__ == '__main__':
         print str(m)
     print "-End Elite model-"
     eliteModel = makeKerasGivenMods(eliteBP, eliteMods, True, )
-    eliteLoss, eliteAcc = runMNIST(eliteModel, (x_train, y_train), num_samples, (x_test, y_test), datagen,
+    eliteLoss, eliteAcc = runCIFAR(eliteModel, (x_train, y_train), num_samples, (x_test, y_test), datagen,
                                    epochs=100, verbosity=2)
     print "Elite Model loss:%f accuracy:%f" % (eliteLoss, eliteAcc)
     print "Evolution took %d generations" % g

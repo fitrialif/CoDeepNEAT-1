@@ -222,8 +222,8 @@ def setupCIFAR(verbose=False):
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_test = keras.utils.to_categorical(y_test, num_classes)
     # Put the inputs into a more usable range
-    x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)  # use channels last convention
-    x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
+    x_train = x_train.reshape(x_train.shape[0], 32, 32, 3)  # use channels last convention
+    x_test = x_test.reshape(x_test.shape[0], 32, 32, 3)
     x_train = x_train.astype('float32')
     x_test = x_test.astype('float32')
 
@@ -271,11 +271,13 @@ def runCIFAR(model, trainData, num_samples, valData, datagen, epochs=10, batchSi
                         verbose=verbosity,
                         workers=4)
 
+    # Incase higher level verbosity is defined at some point
     verb = 0 if verbosity == 0 else 1
 
     (loss, accuracy) = model.evaluate(valData[0], valData[1], verbose=verb)
 
     return loss, accuracy
+
 
 if __name__ == '__main__':
     import os
